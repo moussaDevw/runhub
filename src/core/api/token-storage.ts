@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 
 let SecureStore: any = null;
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const mod = require('expo-secure-store');
   if (mod && typeof mod.setItemAsync === 'function') {
     SecureStore = mod;
@@ -12,6 +13,7 @@ try {
 
 let AsyncStorage: any = null;
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const mod = require('@react-native-async-storage/async-storage');
   AsyncStorage = mod.default || mod;
   if (AsyncStorage && typeof AsyncStorage.setItem !== 'function') {
@@ -22,18 +24,12 @@ try {
 // Fallback natif garanti dans Expo Go : expo-file-system
 let FileSystem: any = null;
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const mod = require('expo-file-system/legacy');
   if (mod && mod.documentDirectory && typeof mod.writeAsStringAsync === 'function') {
     FileSystem = mod;
   }
 } catch { }
-
-console.log('[TokenStorage] Moteurs de stockage initialisés:', {
-  platform: Platform.OS,
-  secureStore: !!SecureStore,
-  asyncStorage: !!AsyncStorage,
-  fileSystem: !!FileSystem,
-});
 
 const ACCESS_TOKEN_KEY = 'runhub_access_token';
 const REFRESH_TOKEN_KEY = 'runhub_refresh_token';

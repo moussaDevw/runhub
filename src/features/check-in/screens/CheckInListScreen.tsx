@@ -1,11 +1,13 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEventDetail } from '@/features/events/hooks/useEvents';
+import { formatEventPresentation } from '@/features/events/utils/event.utils';
 
-import { Colors,  AccentColors, Spacing, Typography } from '@/constants/theme';
 import { CheckInProgress } from '@/components/ui/check-in-progress';
 import { ParticipantRow, ParticipantStatus } from '@/components/ui/participant-row';
+import { AccentColors, Colors, Spacing, Typography } from '@/constants/theme';
 
 const mockParticipants = [
   { id: '1', name: 'Aïssatou Diallo', initials: 'AD', color: '#f2784f', payment: 'Payé · 2 000 F', status: 'Arrivé' },
@@ -19,6 +21,10 @@ const mockParticipants = [
 export function CheckInListScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { data: event } = useEventDetail(id || '');
+
+  const presentation = event ? formatEventPresentation(event) : null;
 
   return (
     <View style={[styles.container, { paddingTop: Math.max(insets.top, 16) }]}>
@@ -29,44 +35,50 @@ export function CheckInListScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={24} color={Colors.light.text} />
         </TouchableOpacity>
-        
+
         <View style={styles.headerTitles}>
-          <Text style={styles.headerTitle}>Foot à 5 du jeudi</Text>
-          <Text style={styles.headerSubtitle}>Check-in · JEU 20:00</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>{event?.title || 'Chargement...'}</Text>
+          {presentation && (
+            <Text style={styles.headerSubtitle}>Check-in · {presentation.dateDay} {presentation.dateTime}</Text>
+          )}
         </View>
 
-        <View style={styles.orgaBadge}>
-          <Text style={styles.orgaText}>ORGA</Text>
-        </View>
+        <TouchableOpacity 
+          style={styles.editButton} 
+          onPress={() => id && router.push(`/(tabs)/creer?id=${id}` as any)}
+        >
+          <Ionicons name="create-outline" size={18} color={AccentColors.bissap} style={{ marginRight: 4 }} />
+          <Text style={styles.editText}>Modifier</Text>
+        </TouchableOpacity>
       </View>
 
       {/* PROGRESS SECTION */}
       <CheckInProgress current={3} total={6} />
 
       {/* PARTICIPANTS LIST */}
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]} // Space for floating button
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.sectionTitle}>PARTICIPANTS</Text>
-        
+
         {mockParticipants.map((p) => (
-          <ParticipantRow 
+          <ParticipantRow
             key={p.id}
             name={p.name}
             initials={p.initials}
             avatarColor={p.color}
             paymentStatus={p.payment}
             status={p.status as ParticipantStatus}
-            onCheckInToggle={() => {}}
+            onCheckInToggle={() => { }}
           />
         ))}
       </ScrollView>
 
       {/* FLOATING BUTTON */}
       <View style={[styles.floatingButtonContainer, { paddingBottom: Math.max(insets.bottom, 24) }]}>
-        <TouchableOpacity 
-          style={styles.floatingButton} 
+        <TouchableOpacity
+          style={styles.floatingButton}
           activeOpacity={0.8}
           onPress={() => router.push('/scan' as any)}
         >
@@ -159,5 +171,19 @@ const styles = StyleSheet.create({
     fontFamily: Typography.corpsGras.fontFamily,
     fontSize: 16,
     color: '#ffffff',
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: AccentColors.bissap,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  editText: {
+    fontFamily: Typography.corpsGras.fontFamily,
+    fontSize: 12,
+    color: AccentColors.bissap,
   },
 });

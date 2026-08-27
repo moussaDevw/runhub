@@ -1,7 +1,9 @@
+import { setOnUnauthenticated } from '@/core/api/client';
 import { TokenStorage } from '@/core/api/token-storage';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { AuthApi } from '../api/auth.api';
 import { User } from '../types/auth.types';
+
 
 interface AuthContextType {
   user: User | null;
@@ -25,11 +27,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function bootstrap() {
       try {
-        const token = await TokenStorage.getAccessToken();
-        if (token) {
+        const initialToken = await TokenStorage.getAccessToken();
+        if (initialToken) {
           const me = await AuthApi.getMe();
+          // Le token a pu être rafraîchi par le client API pendant l'appel,
+          // on récupère donc la version la plus récente dans le storage.
+          const activeToken = await TokenStorage.getAccessToken();
           setUser(me);
-          setSession(token);
+          setSession(activeToken);
         }
       } catch {
         // Token invalide/expiré → on nettoie
@@ -41,57 +46,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     bootstrap();
   }, []);
 
-  const login = async (
+  const login = useCallback(async (
     provider: 'google' | 'apple',
     idToken: string,
     firstName?: string,
     lastName?: string,
   ): Promise<User> => {
     const res = await AuthApi.verifyOAuth(provider, idToken, firstName, lastName);
-    const token = await TokenStorage.getAccessToken();
 
     try {
       const fullUser = await AuthApi.getMe();
+      const finalToken = await TokenStorage.getAccessToken();
       setUser(fullUser);
-      setSession(token);
+      setSession(finalToken);
       return fullUser;
     } catch {
+      const token = await TokenStorage.getAccessToken();
       setUser(res.user);
       setSession(token);
       return res.user;
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await AuthApi.logout();
     await TokenStorage.clearTokens();
     setUser(null);
     setSession(null);
-  };
+  }, []);
 
-  const updateUser = (updatedUser: User) => {
+  // Register logout as the global unauthenticated handler so the API client
+  // can trigger it automatically when a 401 cannot be recovered by a token refresh.
+  useEffect(() => {
+    setOnUnauthenticated(logout);
+  }, [logout]);
+
+  const updateUser = useCallback((updatedUser: User) => {
     setUser(updatedUser);
-  };
+  }, []);
 
-  const refreshUser = async (): Promise<User> => {
+  const refreshUser = useCallback(async (): Promise<User> => {
     const fresh = await AuthApi.getMe();
     setUser(fresh);
     return fresh;
-  };
+  }, []);
+
+  const value = useMemo<AuthContextType>(() => ({
+    user,
+    session,
+    isLoading,
+    isAuthenticated: !!session,
+    login,
+    logout,
+    updateUser,
+    refreshUser,
+  }), [user, session, isLoading, login, logout, updateUser, refreshUser]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        isLoading,
-        isAuthenticated: !!session,
-        login,
-        logout,
-        updateUser,
-        refreshUser,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

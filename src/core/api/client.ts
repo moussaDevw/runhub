@@ -3,6 +3,12 @@
  *
  * All API modules should use `apiClient` instead of calling `fetch` directly.
  * This keeps base URL, headers, auth tokens, and error handling in one place.
+ *
+ * ## Refresh flow
+ * When the server responds with 401, the client:
+ *   1. Tries to get a new access token using the stored refresh token.
+ *   2. Retries the original request once with the new token.
+ *   3. If the refresh itself fails, calls `onUnauthenticated()` to trigger logout.
  */
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
@@ -42,7 +48,18 @@ export class ApiError extends Error {
     public statusText: string,
     public body?: unknown,
   ) {
-    super(`API Error ${status}: ${statusText}`);
+    // Attempt to extract the backend's detailed error message
+    let detailedMessage = `API Error ${status}: ${statusText}`;
+    if (body && typeof body === 'object') {
+      const b = body as Record<string, any>;
+      // NestJS often puts validation messages in an array or string under "message"
+      if (b.message) {
+        const errorDetails = Array.isArray(b.message) ? b.message.join(', ') : b.message;
+        detailedMessage += ` - ${errorDetails}`;
+      }
+    }
+
+    super(detailedMessage);
     this.name = 'ApiError';
   }
 }
@@ -53,17 +70,91 @@ interface ApiClientOptions extends Omit<RequestInit, 'body'> {
   baseUrl?: string;
   /** Skip injecting the Auth token (e.g., for login/register endpoints) */
   skipAuth?: boolean;
+  /** Internal flag — prevents infinite retry loop on refresh failure */
+  _isRetry?: boolean;
 }
+
+// ---------------------------------------------------------------------------
+// Refresh token logic
+// ---------------------------------------------------------------------------
+
+/** Prevents multiple simultaneous refresh calls */
+let isRefreshing = false;
+/** Queue of resolve/reject callbacks waiting for the refresh to complete */
+let refreshQueue: { resolve: (token: string) => void; reject: (err: unknown) => void }[] = [];
+
+/**
+ * Global callback triggered when authentication cannot be recovered.
+ * Set this from AuthContext so the client can call logout() automatically.
+ */
+let onUnauthenticated: (() => void) | null = null;
+
+export function setOnUnauthenticated(callback: () => void) {
+  onUnauthenticated = callback;
+}
+
+/**
+ * Attempts to get a fresh access token using the stored refresh token.
+ * Deduplicates concurrent calls so only one refresh request is made at a time.
+ */
+async function refreshAccessToken(): Promise<string> {
+  if (isRefreshing) {
+    // Another refresh is already in progress — queue this caller
+    return new Promise<string>((resolve, reject) => {
+      refreshQueue.push({ resolve, reject });
+    });
+  }
+
+  isRefreshing = true;
+
+  try {
+    const refreshToken = await TokenStorage.getRefreshToken();
+    if (!refreshToken) throw new Error('No refresh token available');
+
+    const response = await fetch(`${BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!response.ok) {
+      throw new ApiError(response.status, response.statusText);
+    }
+
+    const json = await response.json();
+    const newAccessToken: string = json.accessToken ?? json.access_token ?? json.token ?? json.data?.accessToken;
+
+    if (!newAccessToken) throw new Error('Refresh response did not contain an access token');
+
+    await TokenStorage.setAccessToken(newAccessToken);
+
+    // Resolve all queued callers with the new token
+    refreshQueue.forEach(({ resolve }) => resolve(newAccessToken));
+    return newAccessToken;
+  } catch (err) {
+    // Reject all queued callers
+    refreshQueue.forEach(({ reject }) => reject(err));
+    throw err;
+  } finally {
+    isRefreshing = false;
+    refreshQueue = [];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Core client
+// ---------------------------------------------------------------------------
 
 /**
  * Makes an authenticated API request.
  * Automatically injects JWT Bearer token and unwraps NestJS `ApiResponse.success(data)`.
+ * On 401, attempts a token refresh and retries the request once.
  */
 export async function apiClient<T>(
   endpoint: string,
   options: ApiClientOptions = {},
 ): Promise<T> {
-  const { body, baseUrl, skipAuth, headers: customHeaders, ...fetchOptions } = options;
+  const { body, baseUrl, skipAuth, _isRetry = false, headers: customHeaders, ...fetchOptions } = options;
 
   const url = `${baseUrl ?? BASE_URL}${endpoint}`;
 
@@ -91,6 +182,19 @@ export async function apiClient<T>(
     body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
   });
 
+  // --- 401 Handling: try refresh + retry once ---
+  if (response.status === 401 && !skipAuth && !_isRetry) {
+    try {
+      await refreshAccessToken();
+      // Retry the original request with the new token (marked as retry to prevent loop)
+      return apiClient<T>(endpoint, { ...options, _isRetry: true });
+    } catch {
+      // Refresh failed — session is invalid, trigger logout
+      onUnauthenticated?.();
+      throw new ApiError(401, 'Unauthorized — session expired');
+    }
+  }
+
   if (!response.ok) {
     let errorBody: unknown;
     try {
@@ -115,3 +219,4 @@ export async function apiClient<T>(
 
   return json as T;
 }
+

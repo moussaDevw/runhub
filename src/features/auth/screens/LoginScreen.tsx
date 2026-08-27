@@ -64,7 +64,7 @@ function RealGoogleAuthButton({
         Alert.alert('Erreur Google', "Aucun jeton d'identité (idToken) retourné par Google.");
       }
     }
-  }, [response]);
+  }, [response, onSuccessToken]);
 
   return (
     <TouchableOpacity

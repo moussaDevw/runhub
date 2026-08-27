@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
 
 import { Avatar } from '@/components/ui/avatar';
 import { Chip } from '@/components/ui/chip';
@@ -9,43 +8,47 @@ import { EventCard } from '@/components/ui/event-card';
 import { FilterModalNative } from '@/components/ui/filter-modal-native';
 import { IconButton } from '@/components/ui/icon-button';
 import { SearchBar } from '@/components/ui/search-bar';
-import { Colors,  AccentColors, BackgroundThemes, Radius, Spacing, Typography } from '@/constants/theme';
-import { formatTime, getDayLabel, formatPrice } from '@/core/utils/locale';
+import { AccentColors, BackgroundThemes, Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { formatPrice, formatTime, getDayLabel } from '@/core/utils/locale';
 import { getOrganizerDisplay } from '@/core/utils/user';
-import { useAuth } from '@/features/auth/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useEventsList } from '../hooks/useEvents';
-
-const FILTERS = ['Tout', "Aujourd'hui", 'Running', 'Football', 'Yoga'];
+import { useTranslation } from 'react-i18next';
+import { useExploreScreen } from '../hooks/useExploreScreen';
+import { getEventImageSource } from '../utils/event.utils';
 
 export function ExploreScreen() {
-  const [filterVisible, setFilterVisible] = useState(false);
-  const [activeFilter, setActiveFilter] = useState('Tout');
-  const router = useRouter();
-  const { user } = useAuth();
+  const { t } = useTranslation();
+  const {
+    filterVisible,
+    setFilterVisible,
+    activeSportId,
+    setActiveSportId,
+    activeDateFilter,
+    setActiveDateFilter,
+    searchQuery,
+    setSearchQuery,
+    userInitials,
+    sportsList,
+    events,
+    isLoading,
+    error,
+    isRefetching,
+    refetch,
+    handleNavigateProfile,
+    handleNavigateFavorites,
+    handleNavigateNotifications,
+    handleNavigateCreate,
+    handleNavigateEvent,
+  } = useExploreScreen();
 
-  const { data: events = [], isLoading, error, refetch, isRefetching } = useEventsList();
+  const DATE_FILTERS = [
+    { id: 'today', labelKey: 'explore.filterToday' },
+    { id: 'weekend', labelKey: 'explore.filterWeekend' },
+    { id: 'week', labelKey: 'explore.filterWeek' },
+    { id: 'month', labelKey: 'explore.filterMonth' },
+  ] as const;
 
-  // Filter events based on activeFilter
-  const filteredEvents = events.filter((event) => {
-    if (activeFilter === 'Tout') return true;
-
-    if (activeFilter === "Aujourd'hui") {
-      const eventDate = new Date(event.startsAt).toDateString();
-      const todayDate = new Date().toDateString();
-      return eventDate === todayDate;
-    }
-
-    return event.sport.slug.toLowerCase() === activeFilter.toLowerCase();
-  });
-
-  const userInitials =
-    user?.firstName && user?.lastName
-      ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-      : 'TD';
-
-  const defaultImage = require('@/assets/images/bg_home.jpeg');
+  const availableNeighborhoods = Array.from(new Set(events.map(e => e.city).filter(Boolean) as string[]));
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -63,11 +66,11 @@ export function ExploreScreen() {
             <Text style={styles.mainTitle} numberOfLines={1}>Yallaa, on bouge ?</Text>
           </View>
           <View style={styles.topRightActions}>
-            <IconButton iconName="heart-outline" variant="outline" onPress={() => router.push('/favorites' as any)} />
+            <IconButton iconName="heart-outline" variant="outline" onPress={handleNavigateFavorites} />
             <View style={{ width: 8 }} />
-            <IconButton iconName="notifications-outline" variant="outline" hasBadge onPress={() => router.push('/notifications' as any)} />
+            <IconButton iconName="notifications-outline" variant="outline" hasBadge onPress={handleNavigateNotifications} />
             <View style={{ width: 12 }} />
-            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push('/profil')}>
+            <TouchableOpacity activeOpacity={0.8} onPress={handleNavigateProfile}>
               <Avatar initials={userInitials} size={44} backgroundColor="#b78ad6" />
             </TouchableOpacity>
           </View>
@@ -75,11 +78,14 @@ export function ExploreScreen() {
 
         {/* Search & Filter Row */}
         <View style={styles.searchRow}>
-          <SearchBar />
+          <SearchBar
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
           <View style={{ width: Spacing.space12 }} />
           <IconButton
             iconName="options-outline"
-            hasBadge
+            hasBadge={false}
             onPress={() => setFilterVisible(true)}
           />
         </View>
@@ -100,7 +106,7 @@ export function ExploreScreen() {
         </View>
       ) : (
         <FlatList
-          data={filteredEvents}
+          data={events}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
@@ -113,14 +119,21 @@ export function ExploreScreen() {
           }
           ListHeaderComponent={
             <View style={styles.scrollHeaderSection}>
-              {/* Filters Row */}
+              {/* Sports Filters */}
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll} contentContainerStyle={styles.filtersContent}>
-                {FILTERS.map((filter) => (
+                <Chip
+                  label={t('explore.filterAll')}
+                  isActive={!activeSportId}
+                  onPress={() => setActiveSportId(undefined)}
+                />
+                {sportsList.map((sport) => (
                   <Chip
-                    key={filter}
-                    label={filter}
-                    isActive={activeFilter === filter}
-                    onPress={() => setActiveFilter(filter)}
+                    key={sport.id}
+                    label={sport.labelFr}
+                    isActive={activeSportId === sport.id}
+                    onPress={() => setActiveSportId(
+                      activeSportId === sport.id ? undefined : sport.id,
+                    )}
                   />
                 ))}
               </ScrollView>
@@ -131,15 +144,15 @@ export function ExploreScreen() {
               <Ionicons name="calendar-outline" size={64} color={Colors.light.ink3} style={{ marginBottom: Spacing.space16 }} />
               <Text style={styles.emptyTitle}>Aucun événement trouvé</Text>
               <Text style={styles.emptySubtitle}>
-                {activeFilter === 'Tout'
+                {!activeSportId
                   ? "Sois le premier à organiser une session sportive à Dakar !"
                   : "Aucun événement ne correspond à ce filtre pour le moment."}
               </Text>
-              {activeFilter === 'Tout' && (
+              {!activeSportId && (
                 <TouchableOpacity
                   style={styles.createButton}
                   activeOpacity={0.8}
-                  onPress={() => router.push('/(tabs)/creer' as any)}
+                  onPress={handleNavigateCreate}
                 >
                   <Text style={styles.createButtonText}>Créer un event 🚀</Text>
                 </TouchableOpacity>
@@ -147,10 +160,9 @@ export function ExploreScreen() {
             </View>
           }
           renderItem={({ item }) => {
-            const { name: organizerName, initials: organizerInitials } = getOrganizerDisplay(item.organizer);
+            const { name: _organizerName, initials: organizerInitials } = getOrganizerDisplay(item.organizer);
             const priceStr = formatPrice(item.price);
 
-            // Prepare single participant card representation
             const participantsList = [
               {
                 id: item.organizer.id,
@@ -172,15 +184,21 @@ export function ExploreScreen() {
                 sportLabel={item.sport.labelFr}
                 sportColor={item.sport.color}
                 badgeTime={`${getDayLabel(item.startsAt)} ${formatTime(item.startsAt)}`}
-                imageSource={defaultImage}
-                onPress={() => router.push(`/event/${item.id}` as any)}
+                imageSource={getEventImageSource(item.coverUrl)}
+                onPress={() => handleNavigateEvent(item.id)}
               />
             );
           }}
         />
       )}
 
-      <FilterModalNative isVisible={filterVisible} onDismiss={() => setFilterVisible(false)} />
+      <FilterModalNative
+        isVisible={filterVisible}
+        onDismiss={() => setFilterVisible(false)}
+        activeDateFilter={activeDateFilter}
+        onApplyDateFilter={setActiveDateFilter}
+        availableNeighborhoods={availableNeighborhoods}
+      />
     </SafeAreaView>
   );
 }
@@ -251,6 +269,10 @@ const styles = StyleSheet.create({
   },
   filtersScroll: {
     marginHorizontal: -Spacing.space20,
+  },
+  dateFiltersScroll: {
+    marginHorizontal: -Spacing.space20,
+    marginTop: Spacing.space8,
   },
   filtersContent: {
     paddingHorizontal: Spacing.space20,

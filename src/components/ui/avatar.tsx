@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { Radius, Spacing, Typography, BackgroundThemes } from '@/constants/theme';
+import { Typography, BackgroundThemes } from '@/constants/theme';
 
 interface AvatarProps {
   initials?: string;
@@ -45,7 +45,7 @@ export function Avatar({
 }
 
 interface AvatarGroupProps {
-  users: Array<{ id: string; initials: string; bgColor: string }>;
+  users: { id: string; initials: string; bgColor: string }[];
   max?: number;
   size?: number;
 }

@@ -82,48 +82,50 @@ export const MapLibreView: React.FC<MapLibreViewProps> = ({
     }
   }, [showUserLocation]);
 
-  // Center camera when coordinates change
-  useEffect(() => {
-    if (cameraRef.current) {
-      if (centerCoords) {
-        cameraRef.current.easeTo({
-          center: [centerCoords.longitude, centerCoords.latitude],
-          zoom: zoomLevel,
-          duration: 1000,
-        });
-      } else if (markers.length > 0) {
-        if (markers.length === 1) {
-          cameraRef.current.easeTo({
-            center: [markers[0].longitude, markers[0].latitude],
-            zoom: zoomLevel,
-            duration: 1000,
-          });
-        } else {
-          // Calculate bounds
-          const lats = markers.map((m) => m.latitude);
-          const lngs = markers.map((m) => m.longitude);
-          const minLat = Math.min(...lats);
-          const maxLat = Math.max(...lats);
-          const minLng = Math.min(...lngs);
-          const maxLng = Math.max(...lngs);
+  const [hasLayout, setHasLayout] = useState(false);
 
-          cameraRef.current.fitBounds(
-            [minLng, minLat, maxLng, maxLat],
-            {
-              padding: { top: 50, bottom: 50, left: 50, right: 50 },
-              duration: 1000,
-            }
-          );
-        }
-      } else if (userLocation) {
+  // Center camera when coordinates change (only after layout is complete to avoid fitBounds layout errors)
+  useEffect(() => {
+    if (!hasLayout || !cameraRef.current) return;
+
+    if (centerCoords) {
+      cameraRef.current.easeTo({
+        center: [centerCoords.longitude, centerCoords.latitude],
+        zoom: zoomLevel,
+        duration: 1000,
+      });
+    } else if (markers.length > 0) {
+      if (markers.length === 1) {
         cameraRef.current.easeTo({
-          center: userLocation,
+          center: [markers[0].longitude, markers[0].latitude],
           zoom: zoomLevel,
           duration: 1000,
         });
+      } else {
+        // Calculate bounds
+        const lats = markers.map((m) => m.latitude);
+        const lngs = markers.map((m) => m.longitude);
+        const minLat = Math.min(...lats);
+        const maxLat = Math.max(...lats);
+        const minLng = Math.min(...lngs);
+        const maxLng = Math.max(...lngs);
+
+        cameraRef.current.fitBounds(
+          [minLng, minLat, maxLng, maxLat],
+          {
+            padding: { top: 50, bottom: 50, left: 50, right: 50 },
+            duration: 1000,
+          }
+        );
       }
+    } else if (userLocation) {
+      cameraRef.current.easeTo({
+        center: userLocation,
+        zoom: zoomLevel,
+        duration: 1000,
+      });
     }
-  }, [centerCoords, markers, userLocation]);
+  }, [centerCoords, markers, userLocation, hasLayout, zoomLevel]);
 
   const handlePress = (e: any) => {
     if (onMapPress && e.geometry?.coordinates) {
@@ -169,6 +171,12 @@ export const MapLibreView: React.FC<MapLibreViewProps> = ({
         style={StyleSheet.absoluteFill}
         mapStyle={OSM_STYLE}
         onPress={handlePress}
+        onLayout={(e) => {
+          const { width, height } = e.nativeEvent.layout;
+          if (width > 100 && height > 100) {
+            setHasLayout(true);
+          }
+        }}
       >
         <Camera
           ref={cameraRef}

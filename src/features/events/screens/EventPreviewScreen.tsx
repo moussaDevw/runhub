@@ -1,93 +1,32 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { EventPreviewCard } from '@/components/ui/event-preview-card';
 import { FeatureCheckItem } from '@/components/ui/feature-check-item';
 import { Colors,  AccentColors, Spacing, Typography } from '@/constants/theme';
 import { formatTime, getDayLabel, formatPrice } from '@/core/utils/locale';
-import { getOrganizerDisplay } from '@/core/utils/user';
-import { useAuth } from '@/features/auth/context/AuthContext';
-import { useEventCreationStore } from '@/features/creation/store/useEventCreationStore';
-import { useAllSports } from '@/features/sports/hooks/useSports';
-import { useQueryClient } from '@tanstack/react-query';
-import { EventsApi } from '../api/events.api';
+import { useEventPreview } from '../hooks/useEventPreview';
 
 export function EventPreviewScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const router = useRouter();
-  const queryClient = useQueryClient();
-
-  const { user } = useAuth();
-
-  // Zustand Store selectors
-  const title = useEventCreationStore((state) => state.title);
-  const description = useEventCreationStore((state) => state.description);
-  const sportId = useEventCreationStore((state) => state.sportId);
-  const startsAt = useEventCreationStore((state) => state.startsAt);
-  const venueName = useEventCreationStore((state) => state.venueName);
-  const capacity = useEventCreationStore((state) => state.capacity);
-  const price = useEventCreationStore((state) => state.price);
-  const coords = useEventCreationStore((state) => state.coords);
-  const googlePlaceId = useEventCreationStore((state) => state.googlePlaceId);
-  const city = useEventCreationStore((state) => state.city);
-  const country = useEventCreationStore((state) => state.country);
-  const resetStore = useEventCreationStore((state) => state.resetStore);
-
-  // Load sports to match name and color
-  const { data: sportsList = [] } = useAllSports();
-  const selectedSport = sportsList.find((s) => s.id === sportId);
-
-  const [isPublishing, setIsPublishing] = useState(false);
-
-  const handlePublish = async () => {
-    setIsPublishing(true);
-    try {
-      // 1. Create the event
-      const created = await EventsApi.createEvent({
-        title,
-        description: description || undefined,
-        sportId,
-        startsAt,
-        venueName,
-        capacity,
-        price,
-        coords,
-        googlePlaceId,
-        city,
-        country,
-      });
-
-      // 2. Publish it immediately
-      await EventsApi.publishEvent(created.id);
-
-      // 3. Invalidate React Query events list cache to trigger refresh
-      queryClient.invalidateQueries({ queryKey: ['events'] });
-
-      // 4. Clean Zustand creation state
-      resetStore();
-
-      // 5. Navigate to SuccessScreen
-      router.push('/creation/success' as any);
-    } catch (err) {
-      console.error('Erreur publication événement:', err);
-      const message = err instanceof Error ? err.message : "Impossible de publier l'événement pour le moment. Veuillez réessayer.";
-      Alert.alert(
-        'Erreur de publication',
-        message
-      );
-    } finally {
-      setIsPublishing(false);
-    }
-  };
-
-  const { name: organizerName, initials: organizerInitials } = getOrganizerDisplay({
-    firstName: user?.firstName || null,
-    lastName: user?.lastName || null,
-  });
+  const {
+    title,
+    price,
+    startsAt,
+    venueName,
+    capacity,
+    coverUrl,
+    selectedSport,
+    organizerName,
+    organizerInitials,
+    isPublishing,
+    handlePublish,
+    goBack,
+  } = useEventPreview();
 
   return (
     <View style={styles.container}>
@@ -95,11 +34,11 @@ export function EventPreviewScreen() {
 
       {/* HEADER */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
-        <TouchableOpacity style={styles.iconButton} onPress={() => router.back()} disabled={isPublishing}>
+        <TouchableOpacity style={styles.iconButton} onPress={goBack} disabled={isPublishing}>
           <Ionicons name="chevron-back" size={20} color={Colors.light.text} />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Aperçu</Text>
+        <Text style={styles.headerTitle}>{t('creation.previewTitle')}</Text>
 
         <Text style={styles.stepText}>2/2</Text>
       </View>
@@ -109,7 +48,7 @@ export function EventPreviewScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.subtitle}>
-          Voilà ce que les sportifs verront dans le feed 👇
+          {t('creation.previewSubtitle')}
         </Text>
 
         <EventPreviewCard
@@ -119,17 +58,18 @@ export function EventPreviewScreen() {
           location={venueName}
           organizerInitials={organizerInitials}
           organizerName={organizerName}
-          places={capacity ? `${capacity}` : 'illimité'}
+          places={capacity ? `${capacity}` : t('creation.capacityUnlimited')}
           sportLabel={selectedSport?.labelFr || 'Sport'}
           sportColor={selectedSport?.color || Colors.light.text}
           dateLabel={getDayLabel(startsAt)}
           timeLabel={formatTime(startsAt)}
+          coverUrl={coverUrl || undefined}
         />
 
         <View style={styles.featuresList}>
-          <FeatureCheckItem label="Visible dans Explorer et sur la carte" />
-          <FeatureCheckItem label={price > 0 ? `Paiement Mobile Money activé · ${formatPrice(price)}` : 'Gratuit pour tous les participants'} />
-          <FeatureCheckItem label="Discussion de groupe créée automatiquement" />
+          <FeatureCheckItem label={t('creation.previewFeature1')} />
+          <FeatureCheckItem label={price > 0 ? t('creation.previewFeature2Paid', { price: formatPrice(price) }) : t('creation.previewFeature2Free')} />
+          <FeatureCheckItem label={t('creation.previewFeature3')} />
         </View>
       </ScrollView>
 
@@ -138,10 +78,10 @@ export function EventPreviewScreen() {
         <TouchableOpacity
           style={styles.secondaryButton}
           activeOpacity={0.8}
-          onPress={() => router.back()}
+          onPress={goBack}
           disabled={isPublishing}
         >
-          <Text style={styles.secondaryButtonText}>Modifier</Text>
+          <Text style={styles.secondaryButtonText}>{t('creation.previewButtonModify')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -153,7 +93,7 @@ export function EventPreviewScreen() {
           {isPublishing ? (
             <ActivityIndicator size="small" color="#ffffff" />
           ) : (
-            <Text style={styles.primaryButtonText}>Publier l'event 🚀</Text>
+            <Text style={styles.primaryButtonText}>{t('creation.previewButtonPublish')}</Text>
           )}
         </TouchableOpacity>
       </View>

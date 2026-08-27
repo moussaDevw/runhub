@@ -4,11 +4,14 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ManagedEventCard } from '@/components/ui/managed-event-card';
-import { Colors,  AccentColors, Spacing, Typography } from '@/constants/theme';
+import { AccentColors, Colors, Spacing, Typography } from '@/constants/theme';
+import { useMyEvents } from '../hooks/useEvents';
+import { formatEventPresentation } from '../utils/event.utils';
 
 export function ManageEventsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { data: myEvents = [] } = useMyEvents();
 
   return (
     <View style={styles.container}>
@@ -34,44 +37,18 @@ export function ManageEventsScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <ManagedEventCard
-          status="EN COURS"
-          dateDay="JEU"
-          dateTime="20:00"
-          title="Foot à 5 du jeudi"
-          location="Stade Iba Mar Diop"
-          imageSource={require('@/assets/images/bg_home.jpeg')}
-          inscribedCount={9}
-          maxCapacity={10}
-          revenue={18000}
-          isFree={false}
-          onCheckInPress={() => router.push('/check-in/1' as any)}
-        />
-
-        <ManagedEventCard
-          status="À VENIR"
-          dateDay="MAR"
-          dateTime="18:30"
-          title="Sunset Run · Corniche"
-          location="Corniche Ouest"
-          imageSource={require('@/assets/images/onboarding_bg.png')}
-          inscribedCount={32}
-          maxCapacity={40}
-          isFree={true}
-        />
-
-        <ManagedEventCard
-          status="TERMINÉ"
-          dateDay="DIM"
-          dateTime="19:00"
-          title="Playground 3v3"
-          location="Terrain Médina"
-          imageSource={require('@/assets/images/bg_home.jpeg')}
-          inscribedCount={12}
-          maxCapacity={18}
-          isFree={true}
-        />
-
+        {myEvents.map((event) => {
+          const presentation = formatEventPresentation(event);
+          return (
+            <ManagedEventCard
+              key={event.id}
+              {...presentation}
+              title={event.title}
+              onModifierPress={() => router.push(`/(tabs)/creer?id=${event.id}` as any)}
+              onCheckInPress={() => router.push(`/check-in/${event.id}` as any)}
+            />
+          );
+        })}
       </ScrollView>
     </View>
   );

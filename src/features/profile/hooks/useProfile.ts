@@ -2,7 +2,7 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { ProfileApi } from '@/features/profile/api/profile.api';
 import { useUpdateUserSports } from '@/features/sports/hooks/useSports';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Alert } from 'react-native';
 
 export function useProfile() {
@@ -10,19 +10,13 @@ export function useProfile() {
   const { user, logout, refreshUser } = useAuth();
   const updateSportsMutation = useUpdateUserSports();
 
-  // States for toggles
-  const [notificationsEnabled, setNotificationsEnabledState] = useState(user?.notifEnabled ?? true);
-  const [locationEnabled, setLocationEnabledState] = useState(!!user?.coords);
-  const [ecoModeEnabled, setEcoModeEnabledState] = useState(user?.ecoData ?? false);
+  // deletingSportId is the only piece of local UI state needed
   const [deletingSportId, setDeletingSportId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      if (user.notifEnabled !== undefined) setNotificationsEnabledState(user.notifEnabled);
-      if (user.ecoData !== undefined) setEcoModeEnabledState(user.ecoData);
-      if (user.coords !== undefined) setLocationEnabledState(!!user.coords);
-    }
-  }, [user]);
+  // Derive toggle states directly from user — avoids useState+useEffect anti-pattern
+  const notificationsEnabled = user?.notifEnabled ?? true;
+  const locationEnabled = !!user?.coords;
+  const ecoModeEnabled = user?.ecoData ?? false;
 
   const handleRemoveSport = async (sportId: string) => {
     if (!user?.sports) return;
@@ -46,7 +40,6 @@ export function useProfile() {
   };
 
   const setNotificationsEnabled = async (val: boolean) => {
-    setNotificationsEnabledState(val);
     try {
       await ProfileApi.updateSettings({ notifEnabled: val });
       await refreshUser();
@@ -56,7 +49,6 @@ export function useProfile() {
   };
 
   const setEcoModeEnabled = async (val: boolean) => {
-    setEcoModeEnabledState(val);
     try {
       await ProfileApi.updateSettings({ ecoData: val });
       await refreshUser();
@@ -65,8 +57,7 @@ export function useProfile() {
     }
   };
 
-  const setLocationEnabled = async (val: boolean) => {
-    setLocationEnabledState(val);
+  const setLocationEnabled = async (_val: boolean) => {
     // Si désactivé, on pourrait par exemple envoyer une coordonnée par défaut ou gérer côté app
   };
 

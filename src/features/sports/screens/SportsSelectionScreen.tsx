@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -16,14 +16,11 @@ export function SportsSelectionScreen() {
   const { data: sportsList = [], isLoading: isLoadingSports } = useAllSports();
   const updateSportsMutation = useUpdateUserSports();
 
-  const [selectedSportIds, setSelectedSportIds] = useState<string[]>([]);
+  const [selectedSportIds, setSelectedSportIds] = useState<string[]>(
+    () => user?.sports?.map(s => s.id) ?? []
+  );
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user?.sports) {
-      setSelectedSportIds(user.sports.map(s => s.id));
-    }
-  }, [user?.sports]);
 
   const toggleSport = (sportId: string) => {
     setSelectedSportIds(prev =>

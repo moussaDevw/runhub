@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors, Radius, Spacing, Typography, BackgroundThemes } from '@/constants/theme';
+import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 
 interface InfoSquareCardProps {
   label: string;

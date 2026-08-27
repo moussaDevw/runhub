@@ -1,16 +1,44 @@
-import { Colors,  AccentColors, Spacing, Typography } from '@/constants/theme';
+import { AccentColors, Colors, Spacing, Typography } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Stack, useGlobalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, Text, TouchableOpacity, View, Share } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function SuccessScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { type } = useLocalSearchParams();
-  
+  const { t } = useTranslation();
+  const { type, title, capacity, slug, time } = useGlobalSearchParams<{
+    type?: string;
+    title?: string;
+    capacity?: string;
+    slug?: string;
+    time?: string;
+  }>();
+  console.log({ type, title, capacity, slug, time })
   const isPublish = type === 'publish';
+
+  console.log('SuccessScreen params:', { type, title, capacity, slug, time });
+
+  const eventTitle = title ? decodeURIComponent(title) : 'Sunset Run · Corniche';
+  const eventCapacity = (capacity && capacity !== '0' && capacity !== 'null' && capacity !== 'undefined' && capacity !== '') ? capacity : null;
+  const eventSlug = slug || 'sunset-run-7k2';
+  const eventTime = time || '18:30';
+
+  const handleShare = async () => {
+    try {
+      const url = `https://yallaa.app/e/${eventSlug}`;
+      const message = t('success.publish.shareMessage', { title: eventTitle, url });
+      await Share.share({
+        message,
+        url,
+      });
+    } catch (error) {
+      console.error('Erreur de partage:', error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -24,10 +52,10 @@ export function SuccessScreen() {
       />
 
       <View style={[
-        styles.contentContainer, 
-        { 
+        styles.contentContainer,
+        {
           paddingTop: Math.max(insets.top, 20),
-          paddingBottom: Math.max(insets.bottom, Spacing.space20) 
+          paddingBottom: Math.max(insets.bottom, Spacing.space20)
         }
       ]}>
 
@@ -37,20 +65,28 @@ export function SuccessScreen() {
             <Ionicons name={isPublish ? "flash" : "checkmark"} size={48} color="#ffffff" />
           </View>
 
-          <Text style={styles.title}>{isPublish ? "C'est en ligne !" : "C'est noté !"}</Text>
+          <Text style={styles.title}>
+            {isPublish ? t('success.publish.title') : t('success.join.title')}
+          </Text>
 
           {isPublish ? (
             <>
               <Text style={styles.subtitle}>
-                <Text style={styles.boldText}>Sunset Run · Corniche</Text> est visible dans Explorer. Partage-le pour remplir tes 40 places.
+                <Text style={styles.boldText}>{eventTitle}</Text>
+                {eventCapacity 
+                  ? t('success.publish.subtitleSuffix', { capacity: eventCapacity })
+                  : t('success.publish.subtitleSuffixUnlimited')
+                }
               </Text>
               <View style={styles.linkPill}>
-                <Text style={styles.linkPillText}>yallaa.app/e/sunset-run-7k2</Text>
+                <Text style={styles.linkPillText}>yallaa.app/e/{eventSlug}</Text>
               </View>
             </>
           ) : (
             <Text style={styles.subtitle}>
-              Tu participes à <Text style={styles.boldText}>Sunset Run · Corniche</Text>, auj. à 18:30. On t'a ajouté au groupe WhatsApp.
+              {t('success.join.prefix')}
+              <Text style={styles.boldText}>{eventTitle}</Text>
+              {t('success.join.suffix', { time: eventTime })}
             </Text>
           )}
         </View>
@@ -59,11 +95,12 @@ export function SuccessScreen() {
         <View style={styles.actionsContainer}>
           {isPublish ? (
             <>
-              <TouchableOpacity 
-                style={styles.primaryButton} 
+              <TouchableOpacity
+                style={styles.primaryButton}
                 activeOpacity={0.8}
+                onPress={handleShare}
               >
-                <Text style={styles.primaryButtonText}>Inviter des sportifs</Text>
+                <Text style={styles.primaryButtonText}>{t('success.publish.invite')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -71,24 +108,25 @@ export function SuccessScreen() {
                 activeOpacity={0.8}
                 onPress={() => router.push('/(tabs)/agenda')}
               >
-                <Text style={styles.secondaryButtonText}>Gérer mes events</Text>
+                <Text style={styles.secondaryButtonText}>{t('success.publish.manage')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.tertiaryButton}
                 activeOpacity={0.8}
+                onPress={() => router.push(`/event/${eventSlug}` as any)}
               >
-                <Text style={styles.tertiaryButtonText}>Voir la page de l'event</Text>
+                <Text style={styles.tertiaryButtonText}>{t('success.publish.viewPage')}</Text>
               </TouchableOpacity>
             </>
           ) : (
             <>
-              <TouchableOpacity 
-                style={styles.primaryButton} 
+              <TouchableOpacity
+                style={styles.primaryButton}
                 activeOpacity={0.8}
                 onPress={() => router.push('/ticket/1' as any)}
               >
-                <Text style={styles.primaryButtonText}>Voir mon billet</Text>
+                <Text style={styles.primaryButtonText}>{t('success.join.viewTicket')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -97,7 +135,7 @@ export function SuccessScreen() {
                 onPress={() => router.replace('/chat/1' as any)}
               >
                 <Ionicons name="chatbubble-outline" size={20} color="#ffffff" style={styles.chatIcon} />
-                <Text style={styles.secondaryButtonText}>Ouvrir la discussion</Text>
+                <Text style={styles.secondaryButtonText}>{t('success.join.openChat')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -105,7 +143,7 @@ export function SuccessScreen() {
                 activeOpacity={0.8}
                 onPress={() => router.push('/(tabs)/explorer')}
               >
-                <Text style={styles.tertiaryButtonText}>Explorer d'autres events</Text>
+                <Text style={styles.tertiaryButtonText}>{t('success.join.explore')}</Text>
               </TouchableOpacity>
             </>
           )}

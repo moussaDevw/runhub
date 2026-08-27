@@ -1,17 +1,19 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { Colors,  Spacing, Typography, AccentColors } from '@/constants/theme';
 import { FavoriteItem } from '@/components/ui/favorite-item';
 import { useFavoritesScreen } from '@/features/profile/hooks/useFavoritesScreen';
 
 export function FavoritesScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const {
-    favorites,
     favoriteEvents,
     handleUnlike,
+    isLoading,
     router,
   } = useFavoritesScreen();
 
@@ -20,11 +22,11 @@ export function FavoritesScreen() {
       <View style={styles.emptyIconCircle}>
         <Ionicons name="heart-outline" size={32} color={Colors.light.ink3} />
       </View>
-      <Text style={styles.emptyTitle}>Aucun favori pour l'instant</Text>
-      <Text style={styles.emptySubtitle}>Touche le cœur sur un event pour le retrouver ici.</Text>
+      <Text style={styles.emptyTitle}>{t('favorites.emptyTitle')}</Text>
+      <Text style={styles.emptySubtitle}>{t('favorites.emptySubtitle')}</Text>
       
       <TouchableOpacity style={styles.exploreButton} onPress={() => router.back()}>
-        <Text style={styles.exploreButtonText}>Explorer les events</Text>
+        <Text style={styles.exploreButtonText}>{t('favorites.explore')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -39,13 +41,17 @@ export function FavoritesScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="chevron-back" size={24} color={Colors.light.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Mes favoris</Text>
+          <Text style={styles.headerTitle}>{t('favorites.title')}</Text>
         </View>
-        <Text style={styles.headerActionText}>{favorites.length} ENREG.</Text>
+        <Text style={styles.headerActionText}>{favoriteEvents.length} {t('favorites.saved')}</Text>
       </View>
 
       {/* CONTENT */}
-      {favoriteEvents.length === 0 ? (
+      {isLoading ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={AccentColors.bissap} />
+        </View>
+      ) : favoriteEvents.length === 0 ? (
         renderEmptyState()
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
@@ -71,6 +77,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f4',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',

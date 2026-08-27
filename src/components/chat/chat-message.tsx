@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Avatar } from '@/components/ui/avatar';
-import { Colors,  AccentColors, BackgroundThemes, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors,  AccentColors, Spacing, Typography } from '@/constants/theme';
 
 export interface ChatMessageProps {
   id: string;

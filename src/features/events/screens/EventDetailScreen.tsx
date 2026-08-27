@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Linking, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { MapLibreView } from '@/components/ui/map-libre-view';
@@ -11,21 +11,37 @@ import { IconButton } from '@/components/ui/icon-button';
 import { InfoSquareCard } from '@/components/ui/info-square-card';
 import { OrganizerRow } from '@/components/ui/organizer-row';
 import { Colors,  BackgroundThemes, Spacing, Typography, AccentColors } from '@/constants/theme';
-import { getDeviceLocale, isEnglish, formatPrice } from '@/core/utils/locale';
-import { getOrganizerDisplay } from '@/core/utils/user';
-import { useFavorites } from '@/context/FavoritesContext';
-import { useEventDetail } from '../hooks/useEvents';
+import { formatPrice } from '@/core/utils/locale';
+import { useEventDetailScreen } from '../hooks/useEventDetailScreen';
 
 export function EventDetailScreen() {
-  const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const { isFavorite, toggleFavorite } = useFavorites();
-
-  const liked = id ? isFavorite(id) : false;
-
-  // Fetch real event details
-  const { data: event, isLoading, error } = useEventDetail(id || '');
+  const router = useRouter();
+  const {
+    id,
+    event,
+    isLoading,
+    error,
+    liked,
+    toggleLiked,
+    isOrganizer,
+    isRegistered,
+    isMutating,
+    registrationsCount,
+    spotsLeft,
+    placesText,
+    capacityLabel,
+    participantAvatars,
+    imageSource,
+    organizerFullName,
+    organizerInitials,
+    formattedDate,
+    weekdaySubValue,
+    handleParticipate,
+    handleOpenDirections,
+    goBack,
+    t,
+  } = useEventDetailScreen();
 
   if (isLoading) {
     return (
@@ -38,72 +54,13 @@ export function EventDetailScreen() {
   if (error || !event) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.errorText}>Impossible de charger l'événement.</Text>
-        <TouchableOpacity style={styles.retryBtn} onPress={() => router.back()}>
+        <Text style={styles.errorText}>Impossible de charger l&apos;événement.</Text>
+        <TouchableOpacity style={styles.retryBtn} onPress={goBack}>
           <Text style={styles.retryBtnText}>Retour</Text>
         </TouchableOpacity>
       </View>
     );
   }
-
-  const handleOpenDirections = async () => {
-    if (event.coords) {
-      const lat = event.coords.lat;
-      const lng = event.coords.lng;
-      const placeId = event.googlePlaceId || '';
-      
-      const googleMapsWebUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}${placeId ? `&query_place_id=${placeId}` : ''}`;
-      
-      try {
-        if (Platform.OS === 'ios') {
-          // Open native Google Maps app on iOS
-          await Linking.openURL(`comgooglemaps://?q=${lat},${lng}`);
-        } else {
-          // Open native Google Maps navigation/search on Android
-          await Linking.openURL(`google.navigation:q=${lat},${lng}`);
-        }
-      } catch (err) {
-        // Fallback to Google Maps Web / Universal Link
-        await Linking.openURL(googleMapsWebUrl).catch((webErr) => {
-          console.log('Error opening maps web URL:', webErr);
-        });
-      }
-    }
-  };
-
-  // Date and time formatting
-  const getFormattedDate = (isoString: string) => {
-    if (!isoString) return '';
-    const date = new Date(isoString);
-    const locale = getDeviceLocale();
-    const day = date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
-    const weekday = date.toLocaleDateString(locale, { weekday: 'short' }).replace('.', '');
-    return `${weekday.toUpperCase()}.\n${day}`;
-  };
-
-  const getWeekdaySubValue = (isoString: string) => {
-    if (!isoString) return '';
-    const date = new Date(isoString);
-    const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
-    const tomorrow = new Date();
-    tomorrow.setDate(now.getDate() + 1);
-    const isTomorrow = date.toDateString() === tomorrow.toDateString();
-
-    const en = isEnglish();
-    if (isToday) return en ? "Today" : "Aujourd'hui";
-    if (isTomorrow) return en ? "Tomorrow" : "Demain";
-    return date.toLocaleDateString(getDeviceLocale(), { weekday: 'long' });
-  };
-
-  const { name: organizerFullName, initials: organizerInitials } = getOrganizerDisplay(event.organizer);
-
-  // Spots status
-  const spotsCount = event.capacity;
-  const registrationsCount = event._count?.registrations || 0;
-  const spotsLeft = spotsCount ? spotsCount - registrationsCount : null;
-  const placesText = spotsLeft !== null ? `${spotsLeft} restants` : 'illimité';
-  const capacityLabel = spotsCount ? `${spotsCount} places max` : 'Libre accès';
 
   return (
     <View style={styles.container}>
@@ -116,7 +73,7 @@ export function EventDetailScreen() {
         {/* HEADER IMAGE SECTION */}
         <View style={styles.headerImageContainer}>
           <Image
-            source={require('@/assets/images/onboarding_bg.png')} // Cover source default
+            source={imageSource || undefined}
             style={styles.image}
             contentFit="cover"
           />
@@ -125,12 +82,22 @@ export function EventDetailScreen() {
           <View style={[styles.navButtons, { top: Math.max(insets.top, 20) }]}>
             <IconButton iconName="chevron-back" variant="glass" onPress={() => router.back()} />
             <View style={styles.rightNavButtons}>
+              {isOrganizer && (
+                <>
+                  <IconButton 
+                    iconName="create-outline" 
+                    variant="glass" 
+                    onPress={() => id && router.push(`/(tabs)/creer?id=${id}` as any)} 
+                  />
+                  <View style={{ width: Spacing.space12 }} />
+                </>
+              )}
               <IconButton iconName="share-outline" variant="glass" />
               <View style={{ width: Spacing.space12 }} />
               <IconButton 
                 iconName={liked ? "heart" : "heart-outline"} 
                 variant={liked ? "liked" : "glass"} 
-                onPress={() => id && toggleFavorite(id)} 
+                onPress={toggleLiked} 
               />
             </View>
           </View>
@@ -157,8 +124,8 @@ export function EventDetailScreen() {
           <View style={styles.infoRow}>
             <InfoSquareCard 
               label="QUAND" 
-              value={getFormattedDate(event.startsAt)} 
-              subValue={getWeekdaySubValue(event.startsAt)} 
+              value={formattedDate} 
+              subValue={weekdaySubValue} 
             />
             <View style={{ width: Spacing.space12 }} />
             <InfoSquareCard 
@@ -220,7 +187,7 @@ export function EventDetailScreen() {
                 onPress={handleOpenDirections}
               >
                 <Ionicons name="navigate-outline" size={18} color="#ffffff" style={{ marginRight: 6 }} />
-                <Text style={styles.directionBtnText}>Ouvrir l'itinéraire</Text>
+                <Text style={styles.directionBtnText}>Ouvrir l&apos;itinéraire</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -230,21 +197,41 @@ export function EventDetailScreen() {
             <Text style={[styles.sectionHeading, { marginBottom: Spacing.space16 }]}>
               Qui vient • {registrationsCount}
             </Text>
-            {registrationsCount > 0 ? (
-              <AvatarGroup users={[{ id: '1', initials: organizerInitials, bgColor: event.sport.color }]} max={6} size={44} />
+            {participantAvatars.length > 0 ? (
+              <AvatarGroup users={participantAvatars} max={6} size={44} />
             ) : (
-              <Text style={styles.noParticipantsText}>Soyez le premier à rejoindre l'événement !</Text>
+              <Text style={styles.noParticipantsText}>Soyez le premier à rejoindre l&apos;événement !</Text>
             )}
           </View>
+
+          {/* Registration status badge */}
+          {isRegistered && (
+            <View style={styles.registeredBadge}>
+              <Ionicons name="checkmark-circle" size={18} color={AccentColors.vertTeranga} />
+              <Text style={styles.registeredText}>Vous êtes inscrit(e) ✓</Text>
+            </View>
+          )}
         </View>
       </ScrollView>
 
       {/* FIXED BOTTOM BAR */}
       <EventBottomBar
         price={formatPrice(event.price)}
-        placesStatus={spotsLeft === 0 ? "COMPLET" : "PLACES DISPONIBLES"}
-        onParticipate={() => router.push('/success' as any)}
+        placesStatus={
+          isOrganizer
+            ? t('event.organizerLabel')
+            : spotsLeft === 0
+              ? "COMPLET"
+              : isRegistered
+                ? "INSCRIT"
+                : "PLACES DISPONIBLES"
+        }
+        onParticipate={handleParticipate}
         onChat={() => router.push(`/chat/${id}` as any)}
+        isRegistered={isRegistered}
+        isLoading={isMutating}
+        isOrganizer={isOrganizer}
+        onManage={() => router.push(`/check-in/${id}` as any)}
       />
     </View>
   );
@@ -424,5 +411,20 @@ const styles = StyleSheet.create({
     fontFamily: Typography.corps.fontFamily,
     fontSize: 14,
     color: Colors.light.ink3,
+  },
+  registeredBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e8f5e9',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: Spacing.space24,
+    gap: 8,
+  },
+  registeredText: {
+    fontFamily: Typography.corpsGras.fontFamily,
+    fontSize: 14,
+    color: AccentColors.vertTeranga,
   },
 });

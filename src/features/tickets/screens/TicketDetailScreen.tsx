@@ -73,7 +73,7 @@ export function TicketDetailScreen() {
             </View>
 
             <Text style={styles.ticketCode}>Y L - 7 K 2 - 9 Q D</Text>
-            <Text style={styles.footerText}>Présente ce code à l'organisateur à l'arrivée</Text>
+            <Text style={styles.footerText}>Présente ce code à l&apos;organisateur à l&apos;arrivée</Text>
           </View>
 
         </View>
@@ -85,7 +85,7 @@ export function TicketDetailScreen() {
           </TouchableOpacity>
           <View style={{ width: Spacing.space16 }} />
           <TouchableOpacity style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>Ajouter à l'agenda</Text>
+            <Text style={styles.primaryButtonText}>Ajouter à l&apos;agenda</Text>
           </TouchableOpacity>
         </View>
 

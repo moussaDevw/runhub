@@ -2,6 +2,7 @@ import { Colors, Spacing, Typography } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 interface EventPreviewCardProps {
   title: string;
@@ -15,6 +16,7 @@ interface EventPreviewCardProps {
   sportColor?: string;
   dateLabel?: string;
   timeLabel?: string;
+  coverUrl?: string;
 }
 
 export function EventPreviewCard({
@@ -29,13 +31,16 @@ export function EventPreviewCard({
   sportColor = '#f2784f',
   dateLabel = 'MAR',
   timeLabel = '18:30',
+  coverUrl,
 }: EventPreviewCardProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.card}>
       {/* HEADER IMAGE */}
       <View style={styles.imageContainer}>
         <Image
-          source={require('@/assets/images/onboarding_bg.png')}
+          source={coverUrl ? { uri: coverUrl } : require('@/assets/images/onboarding_bg.png')}
           style={styles.image}
           contentFit="cover"
         />
@@ -70,7 +75,9 @@ export function EventPreviewCard({
           <Text style={styles.infoText}>{time}</Text>
           <Text style={styles.infoDot}>·</Text>
           <Ionicons name="location-outline" size={14} color={Colors.light.ink3} />
-          <Text style={styles.infoText}>{location}</Text>
+          <Text style={[styles.infoText, { flexShrink: 1 }]} numberOfLines={1}>
+            {location}
+          </Text>
         </View>
 
         <View style={styles.organizerRow}>
@@ -78,7 +85,7 @@ export function EventPreviewCard({
             <Text style={styles.avatarText}>{organizerInitials}</Text>
           </View>
           <Text style={styles.organizerText}>
-            Organisé par <Text style={styles.organizerName}>{organizerName}</Text> · {places} places
+            {t('creation.organizedBy')} <Text style={styles.organizerName}>{organizerName}</Text> · {places} {t('creation.places')}
           </Text>
         </View>
       </View>

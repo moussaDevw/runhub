@@ -71,7 +71,7 @@ export function OnboardingScreen() {
             <Text style={styles.superTitle}>ÉTAPE 1 SUR 2</Text>
             <Text style={styles.title}>Faisons connaissance</Text>
             <Text style={styles.subtitle}>
-              Comment tu t'appelles ? C'est le nom sous lequel la communauté te verra.
+              Comment tu t&apos;appelles ? C&apos;est le nom sous lequel la communauté te verra.
             </Text>
 
             <View style={styles.formSection}>

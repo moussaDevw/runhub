@@ -1,14 +1,17 @@
 import { ProfileHeaderCard } from '@/components/ui/profile-header-card';
 import { SettingsRow } from '@/components/ui/settings-row';
 import { SPORT_ICONS } from '@/components/ui/sport-card';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Colors, Spacing, Typography, AccentColors } from '@/constants/theme';
 import { useProfile } from '@/features/profile/hooks/useProfile';
+import { useMyClubs } from '@/features/clubs/hooks/useMyClubs';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 export function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const { t, i18n } = useTranslation();
   const {
     user,
     fullName,
@@ -27,6 +30,8 @@ export function ProfileScreen() {
     router,
   } = useProfile();
 
+  const { data: myClubs, isLoading: isLoadingClubs } = useMyClubs();
+
   return (
     <View style={[styles.container, { paddingTop: Math.max(insets.top, 20) }]}>
       <ScrollView
@@ -44,9 +49,9 @@ export function ProfileScreen() {
 
         {/* MES SPORTS */}
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionHeader}>MES SPORTS</Text>
+          <Text style={styles.sectionHeader}>{t('profile.mySports')}</Text>
           <TouchableOpacity onPress={() => router.push('/sports' as any)}>
-            <Text style={styles.editSportsText}>Modifier</Text>
+            <Text style={styles.editSportsText}>{t('profile.modify')}</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.sportsContainer}>
@@ -82,82 +87,143 @@ export function ProfileScreen() {
           ) : (
             <View style={styles.emptySportsContainer}>
               <MaterialCommunityIcons name="trophy-outline" size={32} color={Colors.light.ink3} style={{ marginBottom: 8 }} />
-              <Text style={styles.noSportsText}>Aucun sport sélectionné</Text>
-              <Text style={styles.noSportsSubtitle}>Choisis tes disciplines pour personnaliser ton expérience.</Text>
+              <Text style={styles.noSportsText}>{t('profile.noSportsSelected')}</Text>
+              <Text style={styles.noSportsSubtitle}>{t('profile.noSportsSelectedSubtitle')}</Text>
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => router.push('/sports' as any)}
                 style={styles.addSportsButtonInline}
               >
                 <Ionicons name="add" size={16} color="#ffffff" style={{ marginRight: 4 }} />
-                <Text style={styles.addSportsButtonLabelInline}>Ajouter des sports</Text>
+                <Text style={styles.addSportsButtonLabelInline}>{t('profile.addSports')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        {/* MES CLUBS */}
+        <View style={[styles.sectionHeaderRow, { marginTop: Spacing.space24 }]}>
+          <Text style={styles.sectionHeader}>Mes Clubs</Text>
+          <TouchableOpacity onPress={() => router.push('/club/create' as any)}>
+            <Text style={styles.editSportsText}>Créer</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.sportsContainer}>
+          {isLoadingClubs ? (
+            <ActivityIndicator size="small" color={AccentColors.bissap} style={{ padding: 20 }} />
+          ) : myClubs && myClubs.length > 0 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.sportsScrollContent}
+            >
+              {myClubs.map((club) => (
+                <TouchableOpacity
+                  key={club.id}
+                  activeOpacity={0.8}
+                  onPress={() => router.push(`/club/${club.id}` as any)}
+                  style={styles.clubCard}
+                >
+                  {club.logoUrl ? (
+                    <Image source={{ uri: club.logoUrl }} style={styles.clubLogo} />
+                  ) : (
+                    <View style={[styles.clubLogo, styles.clubLogoPlaceholder]}>
+                      <Text style={styles.clubLogoText}>{club.name.substring(0, 2).toUpperCase()}</Text>
+                    </View>
+                  )}
+                  <Text style={styles.clubName} numberOfLines={1}>{club.name}</Text>
+                  <Text style={styles.clubRole}>{club.role === 'OWNER' ? 'Propriétaire' : club.role === 'ADMIN' ? 'Admin' : 'Membre'}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.emptySportsContainer}>
+              <Ionicons name="people-outline" size={32} color={Colors.light.ink3} style={{ marginBottom: 8 }} />
+              <Text style={styles.noSportsText}>Aucun club rejoint</Text>
+              <Text style={styles.noSportsSubtitle}>Trouvez un club ou créez le vôtre !</Text>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => router.push('/club/create' as any)}
+                style={styles.addSportsButtonInline}
+              >
+                <Ionicons name="add" size={16} color="#ffffff" style={{ marginRight: 4 }} />
+                <Text style={styles.addSportsButtonLabelInline}>Créer un club</Text>
               </TouchableOpacity>
             </View>
           )}
         </View>
 
         {/* PRÉFÉRENCES */}
-        <Text style={[styles.sectionHeader, { marginTop: Spacing.space24 }]}>PRÉFÉRENCES</Text>
+        <Text style={[styles.sectionHeader, { marginTop: Spacing.space24 }]}>{t('profile.preferences')}</Text>
         <SettingsRow
           iconName="notifications-outline"
-          title="Notifications"
-          subtitle="Rappels, messages, invitations"
+          title={t('profile.notifications')}
+          subtitle={t('profile.notificationsDesc')}
           type="toggle"
           value={notificationsEnabled}
           onValueChange={setNotificationsEnabled}
         />
         <SettingsRow
           iconName="location-outline"
-          title="Localisation"
-          subtitle="Events autour de toi"
+          title={t('profile.location')}
+          subtitle={t('profile.locationDesc')}
           type="toggle"
           value={locationEnabled}
           onValueChange={setLocationEnabled}
         />
         <SettingsRow
           iconName="flash-outline"
-          title="Mode éco-data"
-          subtitle="Charge les images en basse def"
+          title={t('profile.ecoMode')}
+          subtitle={t('profile.ecoModeDesc')}
           type="toggle"
           value={ecoModeEnabled}
           onValueChange={setEcoModeEnabled}
         />
+        <SettingsRow
+          iconName="globe-outline"
+          title={t('profile.language')}
+          subtitle={i18n.language.startsWith('fr') ? 'Français' : 'English'}
+          onPress={() => {
+            const nextLang = i18n.language.startsWith('fr') ? 'en' : 'fr';
+            i18n.changeLanguage(nextLang);
+          }}
+        />
 
         {/* COMPTE */}
-        <Text style={[styles.sectionHeader, { marginTop: Spacing.space24 }]}>COMPTE</Text>
+        <Text style={[styles.sectionHeader, { marginTop: Spacing.space24 }]}>{t('profile.account')}</Text>
         <SettingsRow
           iconName="card-outline"
-          title="Moyens de paiement"
+          title={t('profile.paymentMethods')}
           subtitle="Wave · 77 123 45 67"
           onPress={() => { }}
         />
         <SettingsRow
           iconName="lock-closed-outline"
-          title="Confidentialité"
-          subtitle="Qui voit ton profil"
+          title={t('profile.privacy')}
+          subtitle={t('profile.privacyDesc')}
           onPress={() => { }}
         />
         <SettingsRow
           iconName="shield-checkmark-outline"
-          title="Sécurité & mot de passe"
+          title={t('profile.securityAndPassword')}
           onPress={() => { }}
         />
 
         {/* SUPPORT */}
-        <Text style={[styles.sectionHeader, { marginTop: Spacing.space24 }]}>SUPPORT</Text>
+        <Text style={[styles.sectionHeader, { marginTop: Spacing.space24 }]}>{t('profile.support')}</Text>
         <SettingsRow
           iconName="help-outline"
-          title="Aide & contact"
+          title={t('profile.helpAndContact')}
           onPress={() => { }}
         />
         <SettingsRow
           iconName="arrow-forward-outline"
-          title="Conditions & confidentialité"
+          title={t('profile.termsAndPrivacy')}
           onPress={() => { }}
         />
         <SettingsRow
           iconName="log-out-outline"
-          title="Se déconnecter"
+          title={t('profile.logout')}
           type="none"
           isDestructive={true}
           onPress={handleLogout}
@@ -263,5 +329,40 @@ const styles = StyleSheet.create({
     fontFamily: Typography.corpsGras.fontFamily,
     fontSize: 14,
     color: Colors.light.text,
+  },
+  clubCard: {
+    width: 100,
+    marginRight: Spacing.space12,
+    alignItems: 'center',
+  },
+  clubLogo: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    marginBottom: 8,
+    backgroundColor: '#f2f2f0',
+  },
+  clubLogoPlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: AccentColors.bissap,
+  },
+  clubLogoText: {
+    fontFamily: Typography.titre.fontFamily,
+    fontSize: 20,
+    color: '#ffffff',
+  },
+  clubName: {
+    fontFamily: Typography.corpsGras.fontFamily,
+    fontSize: 13,
+    color: Colors.light.text,
+    textAlign: 'center',
+  },
+  clubRole: {
+    fontFamily: Typography.meta.fontFamily,
+    fontSize: 10,
+    color: Colors.light.ink3,
+    textAlign: 'center',
+    marginTop: 2,
   },
 });

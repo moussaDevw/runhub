@@ -13,16 +13,40 @@ import {
 } from '@expo/ui/jetpack-compose';
 import { padding } from '@expo/ui/jetpack-compose/modifiers';
 import { useState } from 'react';
+import { useFilterModalNative } from './hooks/useFilterModalNative';
 
 export interface FilterModalNativeProps {
   isVisible: boolean;
   onDismiss: () => void;
+  activeDateFilter?: 'today' | 'weekend' | 'week' | 'month';
+  onApplyDateFilter?: (filter?: 'today' | 'weekend' | 'week' | 'month') => void;
+  availableNeighborhoods?: string[];
 }
 
-const WHEN_OPTIONS = ["Aujourd'hui", "Cette semaine", "Ce week-end", "Plus tard"];
-const SPORT_OPTIONS = ['Running', 'Foot', 'Yoga', 'Basket', 'Cyclisme', 'Fitness'];
-const NEIGHBORHOOD_OPTIONS = ['Médina', 'Plateau', 'Yoff', 'Almadies', 'Ngor'];
-const PRICE_OPTIONS = ['Tous', 'Gratuit', 'Payant'];
+const WHEN_OPTIONS = [
+  { id: 'all', label: 'Tous' },
+  { id: 'today', label: "Aujourd'hui" },
+  { id: 'week', label: 'Cette semaine' },
+  { id: 'weekend', label: 'Ce week-end' },
+  { id: 'month', label: 'Ce mois-ci' }
+] as const;
+
+const SPORT_OPTIONS = [
+  { id: 'Running', label: 'Running' },
+  { id: 'Foot', label: 'Foot' },
+  { id: 'Yoga', label: 'Yoga' },
+  { id: 'Basket', label: 'Basket' },
+  { id: 'Cyclisme', label: 'Cyclisme' },
+  { id: 'Fitness', label: 'Fitness' }
+];
+
+
+
+const PRICE_OPTIONS = [
+  { id: 'Tous', label: 'Tous' },
+  { id: 'Gratuit', label: 'Gratuit' },
+  { id: 'Payant', label: 'Payant' }
+];
 
 function SectionChips({
   title,
@@ -31,7 +55,7 @@ function SectionChips({
   onSelect,
 }: {
   title: string;
-  options: string[];
+  options: { id: string, label: string }[];
   selected: string;
   onSelect: (value: string) => void;
 }) {
@@ -47,9 +71,9 @@ function SectionChips({
       <FlowRow horizontalArrangement={{ spacedBy: 8 }} modifiers={[padding(0, 0, 0, 8)]}>
         {options.map((option) => (
           <FilterChip
-            key={option}
-            selected={selected === option}
-            onClick={() => onSelect(option)}
+            key={option.id}
+            selected={selected === option.id}
+            onClick={() => onSelect(option.id)}
             colors={{
               selectedContainerColor: Colors.light.text,
               selectedLabelColor: '#ffffff',
@@ -58,11 +82,11 @@ function SectionChips({
             }}
             border={{
               width: 1,
-              color: selected === option ? Colors.light.text : '#e3e2df',
+              color: selected === option.id ? Colors.light.text : '#e3e2df',
             }}
           >
             <FilterChip.Label>
-              <Text>{option}</Text>
+              <Text>{option.label}</Text>
             </FilterChip.Label>
           </FilterChip>
         ))}
@@ -71,22 +95,27 @@ function SectionChips({
   );
 }
 
-export function FilterModalNative({ isVisible, onDismiss }: FilterModalNativeProps) {
-  const [when, setWhen] = useState("Aujourd'hui");
-  const [sport, setSport] = useState('Running');
-  const [neighborhood, setNeighborhood] = useState('Médina');
-  const [price, setPrice] = useState('Tous');
-  const [distance, setDistance] = useState(5);
+export function FilterModalNative({ isVisible, onDismiss, activeDateFilter, onApplyDateFilter, availableNeighborhoods = [] }: FilterModalNativeProps) {
+  const {
+    when,
+    setWhen,
+    sport,
+    setSport,
+    neighborhood,
+    setNeighborhood,
+    price,
+    setPrice,
+    distance,
+    setDistance,
+    handleReset,
+    handleClose,
+  } = useFilterModalNative({
+    activeDateFilter,
+    onApplyDateFilter,
+    onDismiss,
+  });
 
   if (!isVisible) return null;
-
-  const handleReset = () => {
-    setWhen("Aujourd'hui");
-    setSport('Running');
-    setNeighborhood('Médina');
-    setPrice('Tous');
-    setDistance(5);
-  };
 
   return (
     <ModalBottomSheet
@@ -111,18 +140,20 @@ export function FilterModalNative({ isVisible, onDismiss }: FilterModalNativePro
         </Row>
 
         {/* QUAND */}
-        <SectionChips title="QUAND" options={WHEN_OPTIONS} selected={when} onSelect={setWhen} />
+        <SectionChips title="QUAND" options={WHEN_OPTIONS as any} selected={when} onSelect={setWhen} />
 
         {/* SPORT */}
         <SectionChips title="SPORT" options={SPORT_OPTIONS} selected={sport} onSelect={setSport} />
 
         {/* QUARTIER */}
-        <SectionChips
-          title="QUARTIER"
-          options={NEIGHBORHOOD_OPTIONS}
-          selected={neighborhood}
-          onSelect={setNeighborhood}
-        />
+        {availableNeighborhoods.length > 0 && (
+          <SectionChips
+            title="QUARTIER"
+            options={availableNeighborhoods.map(n => ({ id: n, label: n }))}
+            selected={neighborhood}
+            onSelect={setNeighborhood}
+          />
+        )}
 
         {/* PRIX */}
         <SectionChips title="PRIX" options={PRICE_OPTIONS} selected={price} onSelect={setPrice} />
@@ -167,13 +198,13 @@ export function FilterModalNative({ isVisible, onDismiss }: FilterModalNativePro
           </TextButton>
 
           <Button
-            onClick={onDismiss}
+            onClick={handleClose}
             colors={{
               containerColor: AccentColors.bissap,
               contentColor: '#ffffff',
             }}
           >
-            <Text>Voir 24 events</Text>
+            <Text>Afficher les résultats</Text>
           </Button>
         </Row>
       </Column>

@@ -1,4 +1,4 @@
-import { View, TextInput, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors,  AccentColors, BackgroundThemes, Spacing, Typography } from '@/constants/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

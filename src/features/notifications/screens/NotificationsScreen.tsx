@@ -64,7 +64,7 @@ export function NotificationsScreen() {
           userBgColor="#c64a86"
           subIconName="chatbubble"
           subIconBgColor={Colors.light.text}
-          text={<Text><Text style={styles.boldText}>Moussa Sow</Text> a écrit dans la discussion : « Quelqu'un fait le 10k ? »</Text>}
+          text={<Text><Text style={styles.boldText}>Moussa Sow</Text> a écrit dans la discussion : « Quelqu&apos;un fait le 10k ? »</Text>}
           time="Il y a 5h"
         />
 
@@ -84,7 +84,7 @@ export function NotificationsScreen() {
           userBgColor="#2c7a55"
           subIconName="add"
           subIconBgColor="#b78ad6"
-          text={<Text><Text style={styles.boldText}>Fatou Ndiaye</Text> t'a invité à Playground 3v3.</Text>}
+          text={<Text><Text style={styles.boldText}>Fatou Ndiaye</Text> t&apos;a invité à Playground 3v3.</Text>}
           time="Hier"
         />
       </ScrollView>

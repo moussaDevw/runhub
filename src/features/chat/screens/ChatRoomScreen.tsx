@@ -1,17 +1,28 @@
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 
-import { BackgroundThemes, Spacing } from '@/constants/theme';
+import { BackgroundThemes, Spacing, AccentColors } from '@/constants/theme';
 import { ChatHeader } from '@/components/chat/chat-header';
 import { SystemMessage } from '@/components/chat/system-message';
 import { ChatMessage } from '@/components/chat/chat-message';
-import { LocationAttachment } from '@/components/chat/location-attachment';
 import { ChatInputBar } from '@/components/chat/chat-input-bar';
-import { DUMMY_EVENT_DETAILS } from '@/data/mock-data';
+import { useEventDetail } from '@/features/events/hooks/useEvents';
+import { getEventImageSource } from '@/features/events/utils/event.utils';
 
 export function ChatRoomScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+  const eventId = typeof id === 'string' ? id : '';
+
+  const { data: event, isLoading } = useEventDetail(eventId);
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={AccentColors.bissap} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -19,9 +30,9 @@ export function ChatRoomScreen() {
       
       {/* HEADER */}
       <ChatHeader 
-        title={DUMMY_EVENT_DETAILS.title}
-        subtitle="32 membres • Dakar Runners"
-        imageSource={DUMMY_EVENT_DETAILS.imageSource}
+        title={event?.title || 'Discussion'}
+        subtitle={`${event?._count?.registrations || 1} participant(s) • ${event?.sport?.labelFr || ''}`}
+        imageSource={getEventImageSource(event?.coverUrl)}
         onEventPress={() => router.back()} // Go back to event details
       />
 
@@ -36,66 +47,22 @@ export function ChatRoomScreen() {
           showsVerticalScrollIndicator={false}
         >
           <SystemMessage text="AUJOURD'HUI" />
-          <SystemMessage text="Tu as rejoint la discussion - 32 membres" />
+          <SystemMessage text={`Tu as rejoint la discussion - ${event?._count?.registrations || 1} membre(s)`} />
 
           <ChatMessage 
             id="1"
             isSender={false}
-            text="Salut la team ✌️ RDV demain 18h30 au Monument, on part à 18h45 pile"
-            user={{ name: 'Aïssatou', role: 'orga', initials: 'AD', bgColor: '#f2784f' }}
+            text="Salut la team ✌️ RDV à l'heure indiquée, on démarre pile à l'heure !"
+            user={{ name: event?.organizer?.firstName || 'Organisateur', role: 'orga', initials: `${(event?.organizer?.firstName || 'O')[0]}${(event?.organizer?.lastName || 'R')[0]}`.toUpperCase(), bgColor: event?.sport?.color || '#f2784f' }}
           />
 
           <ChatMessage 
             id="2"
-            isSender={false}
-            text="Présent ! Quelqu'un fait le 10k ?"
-            user={{ name: 'Moussa', initials: 'MS', bgColor: '#c64a86' }}
-          />
-
-          <ChatMessage 
-            id="3"
-            isSender={false}
-            text="Moi le 10k 💪 on se motive"
-            user={{ name: 'Fatou', initials: 'FN', bgColor: '#2c7a55' }}
-          />
-
-          <ChatMessage 
-            id="4"
             isSender={true}
-            text="Je serai là, 5k pour moi cette fois 🤩"
+            text="Je serai présent ! Hâte de commencer cette session 💪"
             time="18:30"
             isRead={true}
           />
-
-          <ChatMessage 
-            id="5"
-            isSender={false}
-            text="Parfait 🔥 Pensez à prendre de l'eau, il fait encore chaud à cette heure ☀️"
-            user={{ name: 'Aïssatou', role: 'orga', initials: 'AD', bgColor: '#f2784f' }}
-          />
-
-          <ChatMessage 
-            id="6"
-            isSender={false}
-            text="On se retrouve où exactement ?"
-            user={{ name: 'Khadim', initials: 'KB', bgColor: '#b78ad6' }}
-          />
-
-          <ChatMessage 
-            id="7"
-            isSender={false}
-            text="Au pied du Monument de la Renaissance, côté Corniche 📍"
-            user={{ name: 'Aïssatou', role: 'orga', initials: 'AD', bgColor: '#f2784f' }}
-          />
-
-          <ChatMessage 
-            id="8"
-            isSender={false}
-            user={{ name: 'Aïssatou', role: 'orga', initials: 'AD', bgColor: '#f2784f' }}
-          >
-            <LocationAttachment title="Monument de la Renaissance" />
-          </ChatMessage>
-
         </ScrollView>
 
         {/* INPUT BAR */}
@@ -109,6 +76,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f4', // Brume for chat background
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: BackgroundThemes.Ivoire,
   },
   keyboardAvoid: {
     flex: 1,

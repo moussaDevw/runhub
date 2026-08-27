@@ -1,20 +1,43 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/ui/avatar';
-import { ClubEventRow } from '@/components/ui/club-event-row';
+
 import { IconButton } from '@/components/ui/icon-button';
 import { Colors,  AccentColors, BackgroundThemes, Spacing, Typography } from '@/constants/theme';
+import { useClubDetails } from '../hooks/useClubDetails';
 
 export function ClubDetailScreen() {
   const router = useRouter();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
 
   const [isSubscribed, setIsSubscribed] = useState(false);
+
+  const { data: club, isLoading, isError } = useClubDetails(id);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={AccentColors.bissap} />
+      </View>
+    );
+  }
+
+  if (isError || !club) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: Colors.light.text, fontFamily: Typography.corps.fontFamily }}>Impossible de charger le club.</Text>
+        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20 }}>
+          <Text style={{ color: AccentColors.bissap, fontFamily: Typography.corpsGras.fontFamily }}>Retour</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -24,7 +47,7 @@ export function ClubDetailScreen() {
         {/* HEADER IMAGE SECTION */}
         <View style={styles.headerImageContainer}>
           <Image
-            source={require('@/assets/images/bg_home.jpeg')}
+            source={club.coverUrl ? { uri: club.coverUrl } : require('@/assets/images/bg_home.jpeg')}
             style={styles.headerImage}
             contentFit="cover"
           />
@@ -38,33 +61,34 @@ export function ClubDetailScreen() {
         <View style={styles.contentCard}>
           {/* Avatar over the border */}
           <View style={styles.avatarWrapper}>
-            <Avatar initials="DA" size={64} backgroundColor="#f2784f" />
+            {club.logoUrl ? (
+              <Image source={{ uri: club.logoUrl }} style={{ width: 64, height: 64, borderRadius: 32 }} />
+            ) : (
+              <Avatar initials={club.name.substring(0, 2).toUpperCase()} size={64} backgroundColor="#f2784f" />
+            )}
           </View>
 
           {/* Club Info */}
           <View style={styles.titleRow}>
-            <Text style={styles.clubName}>Dakar Runners</Text>
+            <Text style={styles.clubName}>{club.name}</Text>
             <Ionicons name="checkmark-circle" size={18} color="#3b82f6" style={{ marginLeft: 4 }} />
           </View>
 
           <Text style={styles.description}>
-            Club de running communautaire · Dakar. On court ensemble 3 fois par semaine, tous niveaux bienvenus.
+            {club.bio || 'Aucune description fournie pour ce club.'}
           </Text>
 
           {/* Stats Row */}
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>1 240</Text>
+              <Text style={styles.statValue}>{club._count?.members || 0}</Text>
               <Text style={styles.statLabel}>membres</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>86</Text>
+              <Text style={styles.statValue}>{club._count?.events || 0}</Text>
               <Text style={styles.statLabel}>events</Text>
             </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>★ 4,9</Text>
-              <Text style={styles.statLabel}>note</Text>
-            </View>
+
           </View>
 
           {/* Action Buttons */}
@@ -82,31 +106,7 @@ export function ClubDetailScreen() {
             <View style={{ width: Spacing.space12 }} />
           </View>
 
-          {/* EVENTS SECTION */}
-          <Text style={styles.sectionTitle}>Ses prochains events</Text>
 
-          <ClubEventRow
-            dateDay="AUJ."
-            dateTime="18h"
-            title="Sunset Run · Corniche"
-            location="Corniche Ouest"
-            imageSource={require('@/assets/images/bg_home.jpeg')}
-            onPress={() => router.push('/event/1')}
-          />
-          <ClubEventRow
-            dateDay="DIM"
-            dateTime="07h"
-            title="Trail des Mamelles"
-            location="Plage de Yoff"
-            imageSource={require('@/assets/images/bg_home.jpeg')}
-          />
-          <ClubEventRow
-            dateDay="LUN"
-            dateTime="20h"
-            title="Run récup · easy 5k"
-            location="Stade Iba Mar Diop"
-            imageSource={require('@/assets/images/bg_home.jpeg')}
-          />
 
         </View>
       </ScrollView>

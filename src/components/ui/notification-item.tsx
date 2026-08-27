@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar } from '@/components/ui/avatar';
-import { Colors,  AccentColors, BackgroundThemes, Spacing, Typography } from '@/constants/theme';
+import { Colors,  AccentColors, Spacing, Typography } from '@/constants/theme';
 
 export type NotificationType = 'system' | 'user';
 

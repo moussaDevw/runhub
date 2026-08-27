@@ -90,7 +90,7 @@ export function QrScannerScreen() {
                 <Text style={styles.secondaryButtonText}>Terminer</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.primaryButton, { backgroundColor: '#2f6b4d' }]} onPress={resetScan}>
-                <Text style={styles.primaryButtonText}>Valider l'entrée</Text>
+                <Text style={styles.primaryButtonText}>Valider l&apos;entrée</Text>
               </TouchableOpacity>
             </View>
           </View>

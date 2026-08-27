@@ -8,29 +8,29 @@ import { ActivityIndicator, Dimensions, ScrollView, StyleSheet, Text, TouchableO
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ClubEventRow } from '@/components/ui/club-event-row';
-import { Colors,  AccentColors, BackgroundThemes, Spacing, Typography } from '@/constants/theme';
+import { AccentColors, BackgroundThemes, Colors, Spacing, Typography } from '@/constants/theme';
 import { formatTime, getDayLabel } from '@/core/utils/locale';
 import { getOrganizerDisplay } from '@/core/utils/user';
 import { useAuth } from '@/features/auth/context/AuthContext';
-import { useEventsList } from '@/features/events/hooks/useEvents';
 import { EventItemResponse } from '@/features/events/api/events.api';
+import { useEventsList } from '@/features/events/hooks/useEvents';
 import { ProfileApi } from '@/features/profile/api/profile.api';
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 export function MapScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, refreshUser } = useAuth();
+  const { refreshUser } = useAuth();
 
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [centerCoords, setCenterCoords] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const [loadingLocation, setLoadingLocation] = useState(true);
 
   // Fetch real events from database
-  const { data: events = [], isLoading: isLoadingEvents, error, refetch } = useEventsList();
+  const { data: eventsResponse, isLoading: isLoadingEvents } = useEventsList();
+  const events = eventsResponse?.data ?? [];
 
   // Filter events that have valid coordinates
   const mapEvents = events.filter((e) => e.coords !== null && e.coords !== undefined);
@@ -41,7 +41,7 @@ export function MapScreen() {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === 'granted') {
-          setPermissionGranted(true);
+          // permission granted — proceed to get location
           const loc = await Location.getCurrentPositionAsync({
             accuracy: Location.Accuracy.Balanced,
           });
@@ -60,7 +60,7 @@ export function MapScreen() {
             console.log('Error updating location on server:', apiErr);
           }
         } else {
-          setPermissionGranted(false);
+          // permission denied — loadingLocation will be set false in finally
         }
       } catch (err) {
         console.log('Error getting user location:', err);
@@ -68,7 +68,7 @@ export function MapScreen() {
         setLoadingLocation(false);
       }
     })();
-  }, []);
+  }, [refreshUser]);
 
   const handleRecenter = () => {
     if (userLocation) {

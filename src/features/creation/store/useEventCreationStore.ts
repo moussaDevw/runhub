@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 export interface EventCreationState {
+  editingEventId?: string;
   title: string;
   description: string;
   sportId: string;
@@ -9,10 +10,15 @@ export interface EventCreationState {
   venueName: string;
   capacity?: number;
   price: number;
+  /** Explicit toggle for the paid section UI — independent from price so the user can enable
+   *  pricing before entering an amount. */
+  isPaidToggle: boolean;
   coords?: { lat: number; lng: number };
   googlePlaceId?: string;
   city?: string;
   country?: string;
+  coverUrl: string | null;
+  coverKey: string | null;
   updateField: <K extends keyof Omit<EventCreationState, 'updateField' | 'resetStore'>>(
     key: K,
     value: EventCreationState[K]
@@ -27,6 +33,7 @@ const getInitialState = () => {
   tomorrow.setHours(18, 30, 0, 0);
 
   return {
+    editingEventId: undefined,
     title: '',
     description: '',
     sportId: '',
@@ -35,10 +42,13 @@ const getInitialState = () => {
     venueName: '',
     capacity: undefined,
     price: 0,
+    isPaidToggle: false,
     coords: undefined,
     googlePlaceId: undefined,
     city: undefined,
     country: undefined,
+    coverUrl: null,
+    coverKey: null,
   };
 };
 

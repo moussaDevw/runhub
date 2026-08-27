@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors,  Radius, Spacing, Typography, BackgroundThemes, AccentColors } from '@/constants/theme';
 import { AvatarGroup } from './avatar';
-import { useFavorites } from '@/context/FavoritesContext';
+import { useFavoriteIds, useToggleFavorite } from '@/features/events/hooks/useFavorites';
 
 export interface EventCardProps {
   id?: string;
@@ -12,7 +12,7 @@ export interface EventCardProps {
   time: string;
   location: string;
   distance?: string;
-  participants: Array<{ id: string; initials: string; bgColor: string }>;
+  participants: { id: string; initials: string; bgColor: string }[];
   totalPlaces: number;
   sportLabel: string;
   sportColor: string;
@@ -38,8 +38,15 @@ export function EventCard({
   style,
   onPress,
 }: EventCardProps) {
-  const { isFavorite, toggleFavorite } = useFavorites();
-  const liked = id ? isFavorite(id) : false;
+  const { data: favoriteIds = [] } = useFavoriteIds();
+  const toggleMutation = useToggleFavorite();
+  const liked = id ? favoriteIds.includes(id) : false;
+
+  const handleToggleFavorite = () => {
+    if (id) {
+      toggleMutation.mutate({ eventId: id, isFavorited: liked });
+    }
+  };
 
   const Container = onPress ? TouchableOpacity : View;
   return (
@@ -57,7 +64,7 @@ export function EventCard({
         {/* Top Right Like Button */}
         <TouchableOpacity 
           style={[styles.likeButton, liked && { backgroundColor: AccentColors.bissap }]} 
-          onPress={() => id && toggleFavorite(id)}
+          onPress={handleToggleFavorite}
         >
           <Ionicons name={liked ? "heart" : "heart-outline"} size={18} color="#ffffff" />
         </TouchableOpacity>
@@ -82,7 +89,9 @@ export function EventCard({
           <Text style={styles.subInfoText}>{time}</Text>
 
           <Ionicons name="location-outline" size={14} color={Colors.light.ink3} style={{ marginLeft: Spacing.space12 }} />
-          <Text style={styles.subInfoText}>{location}</Text>
+          <Text style={[styles.subInfoText, { flexShrink: 1 }]} numberOfLines={1}>
+            {location}
+          </Text>
 
           {distance && (
             <Text style={styles.distanceText}>{distance}</Text>

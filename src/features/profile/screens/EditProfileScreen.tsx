@@ -11,7 +11,6 @@ import { useEditProfile } from '@/features/profile/hooks/useEditProfile';
 export function EditProfileScreen() {
   const insets = useSafeAreaInsets();
   const {
-    user,
     name,
     setName,
     username,
