@@ -1,14 +1,17 @@
 import { AccentColors, BackgroundThemes, Colors } from '@/constants/theme';
 import { useCreateModal } from '@/features/creation/store/useCreateModal';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
-import { Platform } from 'react-native';
 
 export default function TabsLayout() {
   const { open } = useCreateModal();
 
   return (
     <NativeTabs
-      backgroundColor={Platform.OS === 'ios' ? 'rgba(248, 248, 248, 0.7)' : BackgroundThemes.Ivoire}
+      backgroundColor={BackgroundThemes.Ivoire}
+      blurEffect="none"
+      disableTransparentOnScrollEdge={true}
+      minimizeBehavior="never"
+      shadowColor="transparent"
       iconColor={{ default: Colors.light.ink3, selected: AccentColors.bissap }}
       labelStyle={{
         selected: { color: AccentColors.bissap, fontWeight: 'bold' },

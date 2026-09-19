@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 export interface EventCreationState {
   editingEventId?: string;
+  clubId?: string;
   title: string;
   description: string;
   sportId: string;
@@ -34,6 +35,7 @@ const getInitialState = () => {
 
   return {
     editingEventId: undefined,
+    clubId: undefined,
     title: '',
     description: '',
     sportId: '',

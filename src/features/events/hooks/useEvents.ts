@@ -109,3 +109,38 @@ export function useCancelRegistration() {
     },
   });
 }
+
+/**
+ * Mutation: Toggle check-in status of a participant (Arrivé / À venir).
+ */
+export function useToggleCheckIn() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ eventId, registrationId }: { eventId: string; registrationId: string }) =>
+      EventsApi.toggleCheckIn(eventId, registrationId),
+    onSuccess: (_data, { eventId }) => {
+      queryClient.invalidateQueries({ queryKey: ['event', eventId, 'participants'] });
+      queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+  });
+}
+
+/**
+ * Mutation: Validate a ticket by scanning QR code or manual code input.
+ */
+export function useScanTicket() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ eventId, ticketCode }: { eventId: string; ticketCode: string }) =>
+      EventsApi.scanTicket(eventId, ticketCode),
+    onSuccess: (_data, { eventId }) => {
+      queryClient.invalidateQueries({ queryKey: ['event', eventId, 'participants'] });
+      queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+  });
+}
+

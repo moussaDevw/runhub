@@ -83,49 +83,70 @@ export const MapLibreView: React.FC<MapLibreViewProps> = ({
   }, [showUserLocation]);
 
   const [hasLayout, setHasLayout] = useState(false);
+  const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
 
   // Center camera when coordinates change (only after layout is complete to avoid fitBounds layout errors)
   useEffect(() => {
     if (!hasLayout || !cameraRef.current) return;
 
-    if (centerCoords) {
-      cameraRef.current.easeTo({
-        center: [centerCoords.longitude, centerCoords.latitude],
-        zoom: zoomLevel,
-        duration: 1000,
-      });
-    } else if (markers.length > 0) {
-      if (markers.length === 1) {
+    try {
+      if (centerCoords) {
         cameraRef.current.easeTo({
-          center: [markers[0].longitude, markers[0].latitude],
+          center: [centerCoords.longitude, centerCoords.latitude],
           zoom: zoomLevel,
           duration: 1000,
         });
-      } else {
-        // Calculate bounds
-        const lats = markers.map((m) => m.latitude);
-        const lngs = markers.map((m) => m.longitude);
-        const minLat = Math.min(...lats);
-        const maxLat = Math.max(...lats);
-        const minLng = Math.min(...lngs);
-        const maxLng = Math.max(...lngs);
-
-        cameraRef.current.fitBounds(
-          [minLng, minLat, maxLng, maxLat],
-          {
-            padding: { top: 50, bottom: 50, left: 50, right: 50 },
+      } else if (markers.length > 0) {
+        if (markers.length === 1) {
+          cameraRef.current.easeTo({
+            center: [markers[0].longitude, markers[0].latitude],
+            zoom: zoomLevel,
             duration: 1000,
+          });
+        } else {
+          // Calculate bounds
+          const lats = markers.map((m) => m.latitude);
+          const lngs = markers.map((m) => m.longitude);
+          const minLat = Math.min(...lats);
+          const maxLat = Math.max(...lats);
+          const minLng = Math.min(...lngs);
+          const maxLng = Math.max(...lngs);
+
+          const latDelta = Math.abs(maxLat - minLat);
+          const lngDelta = Math.abs(maxLng - minLng);
+
+          // If markers are essentially in the same spot, just center on them
+          if (latDelta < 0.005 && lngDelta < 0.005) {
+            cameraRef.current.easeTo({
+              center: [(minLng + maxLng) / 2, (minLat + maxLat) / 2],
+              zoom: zoomLevel,
+              duration: 1000,
+            });
+          } else {
+            // Calculate safe padding based on view dimensions
+            const safePadH = Math.min(30, Math.floor(dimensions.width * 0.1));
+            const safePadV = Math.min(30, Math.floor(dimensions.height * 0.1));
+
+            cameraRef.current.fitBounds(
+              [minLng, minLat, maxLng, maxLat],
+              {
+                padding: { top: safePadV, bottom: safePadV, left: safePadH, right: safePadH },
+                duration: 1000,
+              }
+            );
           }
-        );
+        }
+      } else if (userLocation) {
+        cameraRef.current.easeTo({
+          center: userLocation,
+          zoom: zoomLevel,
+          duration: 1000,
+        });
       }
-    } else if (userLocation) {
-      cameraRef.current.easeTo({
-        center: userLocation,
-        zoom: zoomLevel,
-        duration: 1000,
-      });
+    } catch (err) {
+      console.warn('Map camera update warning:', err);
     }
-  }, [centerCoords, markers, userLocation, hasLayout, zoomLevel]);
+  }, [centerCoords, markers, userLocation, hasLayout, zoomLevel, dimensions]);
 
   const handlePress = (e: any) => {
     if (onMapPress && e.geometry?.coordinates) {
@@ -173,7 +194,8 @@ export const MapLibreView: React.FC<MapLibreViewProps> = ({
         onPress={handlePress}
         onLayout={(e) => {
           const { width, height } = e.nativeEvent.layout;
-          if (width > 100 && height > 100) {
+          if (width > 20 && height > 20) {
+            setDimensions({ width, height });
             setHasLayout(true);
           }
         }}

@@ -27,7 +27,7 @@ export function ManageEventsScreen() {
 
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => router.push('/(tabs)/creer' as any)}
+          onPress={() => router.push('/event/create' as any)}
         >
           <Ionicons name="add" size={24} color="#ffffff" />
         </TouchableOpacity>
@@ -44,7 +44,7 @@ export function ManageEventsScreen() {
               key={event.id}
               {...presentation}
               title={event.title}
-              onModifierPress={() => router.push(`/(tabs)/creer?id=${event.id}` as any)}
+              onModifierPress={() => router.push(`/event/create?id=${event.id}` as any)}
               onCheckInPress={() => router.push(`/check-in/${event.id}` as any)}
             />
           );

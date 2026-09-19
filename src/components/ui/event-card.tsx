@@ -117,7 +117,7 @@ export function EventCard({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: BackgroundThemes.Creme, // Matches feed background, blending
-    marginBottom: Spacing.space26,
+    marginBottom: Spacing.space20,
   },
   imageContainer: {
     height: 180,

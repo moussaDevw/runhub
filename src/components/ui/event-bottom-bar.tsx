@@ -1,8 +1,8 @@
-import { Colors,  AccentColors, BackgroundThemes, Spacing, Typography } from '@/constants/theme';
+import { AccentColors, BackgroundThemes, Colors, Spacing, Typography } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from './button';
-import { useTranslation } from 'react-i18next';
 
 interface EventBottomBarProps {
   price: string;
@@ -15,12 +15,12 @@ interface EventBottomBarProps {
   onManage?: () => void;
 }
 
-export function EventBottomBar({ 
-  price, 
-  placesStatus, 
-  onParticipate, 
-  onChat, 
-  isRegistered = false, 
+export function EventBottomBar({
+  price,
+  placesStatus,
+  onParticipate,
+  onChat,
+  isRegistered = false,
   isLoading = false,
   isOrganizer = false,
   onManage

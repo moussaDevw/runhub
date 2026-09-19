@@ -4,12 +4,14 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useEventsList } from './useEvents';
+import { useClubsList } from '@/features/clubs/hooks/useClubsList';
 
 export function useExploreScreen() {
   const [filterVisible, setFilterVisible] = useState(false);
   const [activeSportId, setActiveSportId] = useState<string | undefined>(undefined);
   const [activeDateFilter, setActiveDateFilter] = useState<'today' | 'weekend' | 'week' | 'month' | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'events' | 'clubs'>('events');
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   const router = useRouter();
@@ -23,8 +25,14 @@ export function useExploreScreen() {
     dateFilter: activeDateFilter,
   });
 
+  const { data: clubsResponse, isLoading: isLoadingClubs, error: clubsError, refetch: refetchClubs, isRefetching: isRefetchingClubs } = useClubsList({
+    sportId: activeSportId,
+    q: debouncedSearchQuery || undefined,
+  });
+
   const events = eventsResponse?.data ?? [];
-  // console.log({ eventsResponse, events })
+  const clubs = clubsResponse?.data ?? [];
+
   const userInitials =
     user?.firstName && user?.lastName
       ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
@@ -35,6 +43,7 @@ export function useExploreScreen() {
   const handleNavigateNotifications = () => router.push('/notifications' as any);
   const handleNavigateCreate = () => router.push('/(tabs)/creer' as any);
   const handleNavigateEvent = (id: string) => router.push(`/event/${id}` as any);
+  const handleNavigateClub = (id: string) => router.push(`/club/${id}` as any);
 
   return {
     // State
@@ -46,21 +55,26 @@ export function useExploreScreen() {
     setActiveDateFilter,
     searchQuery,
     setSearchQuery,
+    activeTab,
+    setActiveTab,
 
     // Data
     userInitials,
     sportsList,
     events,
-    isLoading,
-    error,
-    isRefetching,
+    clubs,
+    isLoading: activeTab === 'events' ? isLoading : isLoadingClubs,
+    error: activeTab === 'events' ? error : clubsError,
+    isRefetching: activeTab === 'events' ? isRefetching : isRefetchingClubs,
 
     // Actions
-    refetch,
+    refetch: activeTab === 'events' ? refetch : refetchClubs,
     handleNavigateProfile,
     handleNavigateFavorites,
     handleNavigateNotifications,
     handleNavigateCreate,
     handleNavigateEvent,
+    handleNavigateClub,
   };
 }
+

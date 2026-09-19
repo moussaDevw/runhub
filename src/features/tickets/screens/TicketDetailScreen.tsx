@@ -1,13 +1,44 @@
 import { Colors, AccentColors, Spacing, Typography } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { Stack, useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
+import { ActivityIndicator, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+import QRCode from 'react-native-qrcode-svg';
+
+import { useEventDetail, useRegistrationStatus } from '@/features/events/hooks/useEvents';
+import { formatEventPresentation } from '@/features/events/utils/event.utils';
 
 export function TicketDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const eventId = id || '';
+
+  const { data: event, isLoading: isEventLoading } = useEventDetail(eventId);
+  const { data: regStatus, isLoading: isStatusLoading } = useRegistrationStatus(eventId);
+
+  const isLoading = isEventLoading || isStatusLoading;
+  const presentation = event ? formatEventPresentation(event) : null;
+  const rawTicketCode = regStatus?.registration?.ticketCode || 'RUNHUB01';
+  const isCheckedIn = regStatus?.registration?.status === 'CHECKED_IN';
+
+  // Format code nicely: e.g. 7KB9 - QD2A
+  const formattedTicketCode = rawTicketCode.length === 8 
+    ? `${rawTicketCode.slice(0, 4)} - ${rawTicketCode.slice(4)}`
+    : rawTicketCode.split('').join(' ');
+
+  const handleShare = async () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      await Share.share({
+        message: `Mon billet pour "${event?.title || 'l\'événement'}" sur RunHub.\nCode d'accès : ${rawTicketCode}`,
+      });
+    } catch (err) {
+      console.log('Error sharing ticket:', err);
+    }
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -22,74 +53,115 @@ export function TicketDetailScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 24) }]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* TICKET CARD */}
-        <View style={styles.ticketWrapper}>
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={AccentColors.bissap} />
+          <Text style={styles.loadingText}>Chargement de votre billet...</Text>
+        </View>
+      ) : (
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 24) }]}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* TICKET CARD */}
+          <View style={styles.ticketWrapper}>
 
-          {/* Top Half */}
-          <View style={styles.ticketTop}>
-            <View style={styles.imageContainer}>
-              <Image
-                source={require('@/assets/images/bg_home.jpeg')}
-                style={styles.image}
-                contentFit="cover"
-              />
-              <View style={styles.sportBadge}>
-                <View style={styles.sportDot} />
-                <Text style={styles.sportLabel}>RUNNING</Text>
+            {/* Top Half */}
+            <View style={styles.ticketTop}>
+              <View style={styles.imageContainer}>
+                <Image
+                  source={event?.coverUrl ? { uri: event.coverUrl } : require('@/assets/images/bg_home.jpeg')}
+                  style={styles.image}
+                  contentFit="cover"
+                />
+                <View style={styles.sportBadge}>
+                  <View style={[styles.sportDot, event?.sport?.color ? { backgroundColor: event.sport.color } : null]} />
+                  <Text style={styles.sportLabel}>{event?.sport?.labelFr?.toUpperCase() || 'RUNNING'}</Text>
+                </View>
+
+                {/* Status Pill on Top */}
+                <View style={[styles.statusPill, isCheckedIn ? styles.statusCheckedIn : styles.statusValid]}>
+                  <Ionicons
+                    name={isCheckedIn ? 'checkmark-done-circle' : 'shield-checkmark'}
+                    size={14}
+                    color="#ffffff"
+                    style={{ marginRight: 4 }}
+                  />
+                  <Text style={styles.statusPillText}>
+                    {isCheckedIn ? 'Validé à l\'entrée' : 'Billet confirmé'}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.ticketDetails}>
+                <Text style={styles.title}>{event?.title || 'Sunset Run · Corniche'}</Text>
+
+                <View style={styles.infoRow}>
+                  <View style={styles.infoCol}>
+                    <Text style={styles.infoLabel}>QUAND</Text>
+                    <Text style={styles.infoValue}>
+                      {presentation ? `${presentation.dateDay} · ${presentation.dateTime}` : 'AUJ. · 18:30'}
+                    </Text>
+                  </View>
+                  <View style={styles.infoCol}>
+                    <Text style={styles.infoLabel}>LIEU</Text>
+                    <Text style={styles.infoValue}>{event?.venueName || event?.city || 'Dakar'}</Text>
+                  </View>
+                </View>
               </View>
             </View>
 
-            <View style={styles.ticketDetails}>
-              <Text style={styles.title}>Sunset Run · Corniche</Text>
+            {/* Ticket Separator */}
+            <View style={styles.separatorContainer}>
+              <View style={styles.leftCutout} />
+              <View style={styles.dashedLine} />
+              <View style={styles.rightCutout} />
+            </View>
 
-              <View style={styles.infoRow}>
-                <View style={styles.infoCol}>
-                  <Text style={styles.infoLabel}>QUAND</Text>
-                  <Text style={styles.infoValue}>AUJ. · 18:30</Text>
-                </View>
-                <View style={styles.infoCol}>
-                  <Text style={styles.infoLabel}>LIEU</Text>
-                  <Text style={styles.infoValue}>Corniche Ouest</Text>
-                </View>
+            {/* Bottom Half */}
+            <View style={styles.ticketBottom}>
+              <Text style={styles.scanInstructionTitle}>Présente ce QR Code à l&apos;arrivée</Text>
+              
+              <View style={styles.qrCodeWrapper}>
+                <QRCode
+                  value={rawTicketCode}
+                  size={160}
+                  color={Colors.light.text}
+                  backgroundColor="#ffffff"
+                />
               </View>
-            </View>
-          </View>
 
-          {/* Ticket Separator */}
-          <View style={styles.separatorContainer}>
-            <View style={styles.leftCutout} />
-            <View style={styles.dashedLine} />
-            <View style={styles.rightCutout} />
-          </View>
+              <View style={styles.manualCodeBox}>
+                <Text style={styles.manualCodeLabel}>CODE D&apos;ACCÈS MANUEL</Text>
+                <Text style={styles.ticketCode}>{formattedTicketCode}</Text>
+              </View>
 
-          {/* Bottom Half */}
-          <View style={styles.ticketBottom}>
-            <View style={styles.qrCodeWrapper}>
-              <Ionicons name="qr-code" size={160} color={Colors.light.text} />
+              <Text style={styles.footerText}>
+                À présenter à l&apos;organisateur pour le scan caméra ou pour la saisie manuelle.
+              </Text>
             </View>
 
-            <Text style={styles.ticketCode}>Y L - 7 K 2 - 9 Q D</Text>
-            <Text style={styles.footerText}>Présente ce code à l&apos;organisateur à l&apos;arrivée</Text>
           </View>
 
-        </View>
+          {/* BOTTOM ACTIONS */}
+          <View style={styles.actionsRow}>
+            <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.8} onPress={handleShare}>
+              <Ionicons name="share-social-outline" size={18} color={Colors.light.text} style={{ marginRight: 6 }} />
+              <Text style={styles.secondaryButtonText}>Partager</Text>
+            </TouchableOpacity>
+            <View style={{ width: Spacing.space16 }} />
+            <TouchableOpacity 
+              style={styles.primaryButton}
+              activeOpacity={0.8}
+              onPress={() => router.push('/(tabs)/agenda')}
+            >
+              <Ionicons name="calendar-outline" size={18} color="#ffffff" style={{ marginRight: 6 }} />
+              <Text style={styles.primaryButtonText}>Mon agenda</Text>
+            </TouchableOpacity>
+          </View>
 
-        {/* BOTTOM ACTIONS */}
-        <View style={styles.actionsRow}>
-          <TouchableOpacity style={styles.secondaryButton}>
-            <Text style={styles.secondaryButtonText}>Partager</Text>
-          </TouchableOpacity>
-          <View style={{ width: Spacing.space16 }} />
-          <TouchableOpacity style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>Ajouter à l&apos;agenda</Text>
-          </TouchableOpacity>
-        </View>
-
-      </ScrollView>
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -275,6 +347,63 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Colors.light.text,
   },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.space32,
+  },
+  loadingText: {
+    fontFamily: Typography.corps.fontFamily,
+    fontSize: 15,
+    color: Colors.light.ink3,
+    marginTop: Spacing.space16,
+  },
+  statusPill: {
+    position: 'absolute',
+    top: Spacing.space16,
+    right: Spacing.space16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 99,
+  },
+  statusValid: {
+    backgroundColor: 'rgba(47, 107, 77, 0.9)',
+  },
+  statusCheckedIn: {
+    backgroundColor: 'rgba(32, 99, 155, 0.9)',
+  },
+  statusPillText: {
+    fontFamily: Typography.corpsGras.fontFamily,
+    fontSize: 11,
+    color: '#ffffff',
+  },
+  scanInstructionTitle: {
+    fontFamily: Typography.titre.fontFamily,
+    fontSize: 16,
+    color: Colors.light.text,
+    marginBottom: Spacing.space16,
+    textAlign: 'center',
+  },
+  manualCodeBox: {
+    backgroundColor: Colors.light.backgroundElement,
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.space16,
+    width: '100%',
+  },
+  manualCodeLabel: {
+    fontFamily: Typography.meta.fontFamily,
+    fontSize: 10,
+    color: Colors.light.ink3,
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
   primaryButton: {
     flex: 1,
     height: 48,
@@ -282,6 +411,7 @@ const styles = StyleSheet.create({
     backgroundColor: AccentColors.bissap,
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
   },
   primaryButtonText: {
     fontFamily: Typography.corpsGras.fontFamily,

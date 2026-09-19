@@ -46,34 +46,58 @@ export function useEventDetailScreen() {
   const registerMutation = useRegister();
   const cancelMutation = useCancelRegistration();
 
+  const handleViewTicket = () => {
+    if (id) {
+      router.push(`/ticket/${id}` as any);
+    }
+  };
+
+  const handleCancelRegistration = () => {
+    if (!id) return;
+    Alert.alert(
+      'Annuler l\'inscription',
+      'Êtes-vous sûr de vouloir annuler votre inscription à cet événement ?',
+      [
+        { text: 'Non', style: 'cancel' },
+        {
+          text: 'Oui, annuler',
+          style: 'destructive',
+          onPress: () => cancelMutation.mutate(id),
+        },
+      ],
+    );
+  };
+
   const handleParticipate = () => {
     if (!id) return;
 
     if (isRegistered) {
-      Alert.alert(
-        'Annuler l\'inscription',
-        'Êtes-vous sûr de vouloir annuler votre inscription à cet événement ?',
-        [
-          { text: 'Non', style: 'cancel' },
-          {
-            text: 'Oui, annuler',
-            style: 'destructive',
-            onPress: () => cancelMutation.mutate(id),
-          },
-        ],
-      );
+      handleViewTicket();
     } else {
+      if (spotsLeft === 0) {
+        Alert.alert('Événement complet', 'Désolé, il n\'y a plus de place disponible pour cet événement.');
+        return;
+      }
+
       registerMutation.mutate(id, {
         onSuccess: (data) => {
-          Alert.alert(
-            'Inscription confirmée ! 🎉',
-            `Votre code ticket : ${data.ticketCode}`,
-            [{ text: 'Super !' }],
-          );
+          const timeDisplay = event?.startsAt
+            ? new Date(event.startsAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+            : '18:30';
+
+          router.push({
+            pathname: '/success',
+            params: {
+              type: 'join',
+              title: encodeURIComponent(event?.title || ''),
+              time: timeDisplay,
+              id: id,
+            },
+          } as any);
         },
         onError: (err) => {
           const message = err instanceof Error ? err.message : "Impossible de s'inscrire pour le moment.";
-          Alert.alert('Erreur', message);
+          Alert.alert('Erreur d\'inscription', message);
         },
       });
     }
@@ -170,6 +194,8 @@ export function useEventDetailScreen() {
     formattedDate: event ? getFormattedDate(event.startsAt) : '',
     weekdaySubValue: event ? getWeekdaySubValue(event.startsAt) : '',
     handleParticipate,
+    handleViewTicket,
+    handleCancelRegistration,
     handleOpenDirections,
     goBack: () => router.back(),
     t,

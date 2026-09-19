@@ -38,6 +38,8 @@ export function EventDetailScreen() {
     formattedDate,
     weekdaySubValue,
     handleParticipate,
+    handleViewTicket,
+    handleCancelRegistration,
     handleOpenDirections,
     goBack,
     t,
@@ -204,11 +206,34 @@ export function EventDetailScreen() {
             )}
           </View>
 
-          {/* Registration status badge */}
+          {/* Registration status card */}
           {isRegistered && (
-            <View style={styles.registeredBadge}>
-              <Ionicons name="checkmark-circle" size={18} color={AccentColors.vertTeranga} />
-              <Text style={styles.registeredText}>Vous êtes inscrit(e) ✓</Text>
+            <View style={{ marginTop: Spacing.space24 }}>
+              <TouchableOpacity
+                style={styles.registeredCard}
+                activeOpacity={0.85}
+                onPress={handleViewTicket}
+              >
+                <View style={styles.registeredCardLeft}>
+                  <View style={styles.qrIconCircle}>
+                    <Ionicons name="qr-code" size={22} color="#ffffff" />
+                  </View>
+                  <View style={styles.registeredCardTexts}>
+                    <Text style={styles.registeredCardTitle}>Mon billet & QR Code</Text>
+                    <Text style={styles.registeredCardSubtitle}>Toucher pour afficher le code d&apos;accès</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={AccentColors.vertTeranga} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.cancelRegistrationBtn}
+                activeOpacity={0.7}
+                onPress={handleCancelRegistration}
+              >
+                <Ionicons name="close-circle-outline" size={16} color={Colors.light.ink3} style={{ marginRight: 6 }} />
+                <Text style={styles.cancelRegistrationText}>Annuler mon inscription</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -227,10 +252,12 @@ export function EventDetailScreen() {
                 : "PLACES DISPONIBLES"
         }
         onParticipate={handleParticipate}
+        onViewTicket={handleViewTicket}
         onChat={() => router.push(`/chat/${id}` as any)}
         isRegistered={isRegistered}
         isLoading={isMutating}
         isOrganizer={isOrganizer}
+        isFull={spotsLeft === 0}
         onManage={() => router.push(`/check-in/${id}` as any)}
       />
     </View>
@@ -412,19 +439,62 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.light.ink3,
   },
-  registeredBadge: {
+  registeredCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#e8f5e9',
+    justifyContent: 'space-between',
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: AccentColors.vertTeranga,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingVertical: 14,
+    borderRadius: 16,
     marginTop: Spacing.space24,
-    gap: 8,
+    shadowColor: AccentColors.vertTeranga,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  registeredText: {
+  registeredCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  qrIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: AccentColors.vertTeranga,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  registeredCardTexts: {
+    flex: 1,
+  },
+  registeredCardTitle: {
     fontFamily: Typography.corpsGras.fontFamily,
-    fontSize: 14,
-    color: AccentColors.vertTeranga,
+    fontSize: 15,
+    color: Colors.light.text,
+    marginBottom: 2,
+  },
+  registeredCardSubtitle: {
+    fontFamily: Typography.corps.fontFamily,
+    fontSize: 12,
+    color: Colors.light.ink3,
+  },
+  cancelRegistrationBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    marginTop: 8,
+  },
+  cancelRegistrationText: {
+    fontFamily: Typography.corps.fontFamily,
+    fontSize: 13,
+    color: Colors.light.ink3,
+    textDecorationLine: 'underline',
   },
 });

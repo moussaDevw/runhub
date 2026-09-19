@@ -6,16 +6,17 @@ interface IconButtonProps {
   iconName: keyof typeof Ionicons.glyphMap;
   onPress?: () => void;
   hasBadge?: boolean;
-  variant?: 'solid' | 'glass' | 'outline' | 'liked';
+  variant?: 'solid' | 'glass' | 'outline' | 'liked' | 'ghost';
 }
 
 export function IconButton({ iconName, onPress, hasBadge, variant = 'solid' }: IconButtonProps) {
   const isGlass = variant === 'glass';
   const isOutline = variant === 'outline';
   const isLiked = variant === 'liked';
+  const isGhost = variant === 'ghost';
   
   const getIconColor = () => {
-    if (isOutline) return Colors.light.text;
+    if (isOutline || isGhost) return Colors.light.text;
     return '#ffffff';
   };
 
@@ -28,6 +29,7 @@ export function IconButton({ iconName, onPress, hasBadge, variant = 'solid' }: I
         isGlass && styles.glassContainer,
         isOutline && styles.outlineContainer,
         isLiked && styles.likedContainer,
+        isGhost && styles.ghostContainer,
       ]}
     >
       <Ionicons name={iconName} size={22} color={getIconColor()} />
@@ -56,6 +58,12 @@ const styles = StyleSheet.create({
   },
   likedContainer: {
     backgroundColor: AccentColors.bissap,
+  },
+  ghostContainer: {
+    backgroundColor: 'transparent',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   badge: {
     position: 'absolute',

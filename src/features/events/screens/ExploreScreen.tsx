@@ -4,13 +4,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/ui/avatar';
 import { Chip } from '@/components/ui/chip';
+import { ClubCard } from '@/components/ui/club-card';
 import { EventCard } from '@/components/ui/event-card';
 import { FilterModalNative } from '@/components/ui/filter-modal-native';
 import { IconButton } from '@/components/ui/icon-button';
 import { SearchBar } from '@/components/ui/search-bar';
+import { TabSwitcher } from '@/components/ui/strava-tabs';
 import { AccentColors, BackgroundThemes, Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { formatPrice, formatTime, getDayLabel } from '@/core/utils/locale';
 import { getOrganizerDisplay } from '@/core/utils/user';
+import { ClubResponse } from '@/features/clubs/types/clubs.types';
+import { EventItemResponse } from '@/features/events/api/events.api';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useExploreScreen } from '../hooks/useExploreScreen';
@@ -27,9 +31,12 @@ export function ExploreScreen() {
     setActiveDateFilter,
     searchQuery,
     setSearchQuery,
+    activeTab,
+    setActiveTab,
     userInitials,
     sportsList,
     events,
+    clubs,
     isLoading,
     error,
     isRefetching,
@@ -39,14 +46,8 @@ export function ExploreScreen() {
     handleNavigateNotifications,
     handleNavigateCreate,
     handleNavigateEvent,
+    handleNavigateClub,
   } = useExploreScreen();
-
-  const DATE_FILTERS = [
-    { id: 'today', labelKey: 'explore.filterToday' },
-    { id: 'weekend', labelKey: 'explore.filterWeekend' },
-    { id: 'week', labelKey: 'explore.filterWeek' },
-    { id: 'month', labelKey: 'explore.filterMonth' },
-  ] as const;
 
   const availableNeighborhoods = Array.from(new Set(events.map(e => e.city).filter(Boolean) as string[]));
 
@@ -54,25 +55,25 @@ export function ExploreScreen() {
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar style="dark" />
 
-      {/* FIXED HEADER (Profile & Search) */}
+      {/* FIXED HEADER — compact 1-line */}
       <View style={styles.fixedHeader}>
-        {/* Top Bar */}
+        {/* Top Bar : Avatar | Titre | Favoris + Notifications */}
         <View style={styles.topBar}>
-          <View style={styles.topLeft}>
+          <TouchableOpacity activeOpacity={0.8} onPress={handleNavigateProfile}>
+            <Avatar initials={userInitials} size={36} backgroundColor="#b78ad6" />
+          </TouchableOpacity>
+
+          <View style={styles.topCenter}>
             <View style={styles.locationRow}>
-              <Ionicons name="location-outline" size={14} color="#b8324f" />
+              <Ionicons name="location-outline" size={12} color="#b8324f" />
               <Text style={styles.locationText}>DAKAR</Text>
             </View>
-            <Text style={styles.mainTitle} numberOfLines={1}>Yallaa, on bouge ?</Text>
+            <Text style={styles.mainTitle}>Explorer</Text>
           </View>
+
           <View style={styles.topRightActions}>
-            <IconButton iconName="heart-outline" variant="outline" onPress={handleNavigateFavorites} />
-            <View style={{ width: 8 }} />
-            <IconButton iconName="notifications-outline" variant="outline" hasBadge onPress={handleNavigateNotifications} />
-            <View style={{ width: 12 }} />
-            <TouchableOpacity activeOpacity={0.8} onPress={handleNavigateProfile}>
-              <Avatar initials={userInitials} size={44} backgroundColor="#b78ad6" />
-            </TouchableOpacity>
+            <IconButton iconName="heart-outline" variant="ghost" onPress={handleNavigateFavorites} />
+            <IconButton iconName="notifications-outline" variant="ghost" hasBadge onPress={handleNavigateNotifications} />
           </View>
         </View>
 
@@ -85,13 +86,20 @@ export function ExploreScreen() {
           <View style={{ width: Spacing.space12 }} />
           <IconButton
             iconName="options-outline"
-            hasBadge={false}
+            hasBadge={!!activeDateFilter}
             onPress={() => setFilterVisible(true)}
           />
         </View>
+
+        {/* Tab Switcher */}
+        <TabSwitcher
+          options={['Événements', 'Clubs']}
+          selectedIndex={activeTab === 'events' ? 0 : 1}
+          onChange={(index) => setActiveTab(index === 0 ? 'events' : 'clubs')}
+        />
       </View>
 
-      {/* EVENTS FEED */}
+      {/* FEED (EVENTS / CLUBS) */}
       {isLoading ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={AccentColors.bissap} />
@@ -99,14 +107,16 @@ export function ExploreScreen() {
       ) : error ? (
         <View style={styles.centerContainer}>
           <Ionicons name="alert-circle-outline" size={48} color={Colors.light.ink3} />
-          <Text style={styles.errorText}>Impossible de charger les événements</Text>
+          <Text style={styles.errorText}>
+            {activeTab === 'events' ? 'Impossible de charger les événements' : 'Impossible de charger les clubs'}
+          </Text>
           <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
             <Text style={styles.retryText}>Réessayer</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <FlatList
-          data={events}
+          data={(activeTab === 'events' ? events : clubs) as any[]}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
@@ -140,52 +150,84 @@ export function ExploreScreen() {
             </View>
           }
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Ionicons name="calendar-outline" size={64} color={Colors.light.ink3} style={{ marginBottom: Spacing.space16 }} />
-              <Text style={styles.emptyTitle}>Aucun événement trouvé</Text>
-              <Text style={styles.emptySubtitle}>
-                {!activeSportId
-                  ? "Sois le premier à organiser une session sportive à Dakar !"
-                  : "Aucun événement ne correspond à ce filtre pour le moment."}
-              </Text>
-              {!activeSportId && (
-                <TouchableOpacity
-                  style={styles.createButton}
-                  activeOpacity={0.8}
-                  onPress={handleNavigateCreate}
-                >
-                  <Text style={styles.createButtonText}>Créer un event 🚀</Text>
-                </TouchableOpacity>
-              )}
-            </View>
+            activeTab === 'events' ? (
+              <View style={styles.emptyContainer}>
+                <Ionicons name="calendar-outline" size={64} color={Colors.light.ink3} style={{ marginBottom: Spacing.space16 }} />
+                <Text style={styles.emptyTitle}>Aucun événement trouvé</Text>
+                <Text style={styles.emptySubtitle}>
+                  {!activeSportId
+                    ? "Sois le premier à organiser une session sportive à Dakar !"
+                    : "Aucun événement ne correspond à ce filtre pour le moment."}
+                </Text>
+                {!activeSportId && (
+                  <TouchableOpacity
+                    style={styles.createButton}
+                    activeOpacity={0.8}
+                    onPress={handleNavigateCreate}
+                  >
+                    <Text style={styles.createButtonText}>Créer un event 🚀</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Ionicons name="people-outline" size={64} color={Colors.light.ink3} style={{ marginBottom: Spacing.space16 }} />
+                <Text style={styles.emptyTitle}>Aucun club trouvé</Text>
+                <Text style={styles.emptySubtitle}>
+                  {!activeSportId
+                    ? "Aucun club n'a encore été créé sur la plateforme."
+                    : "Aucun club ne correspond à ce filtre pour le moment."}
+                </Text>
+                {!activeSportId && (
+                  <TouchableOpacity
+                    style={styles.createButton}
+                    activeOpacity={0.8}
+                    onPress={handleNavigateCreate}
+                  >
+                    <Text style={styles.createButtonText}>Créer un club 🤝</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )
           }
           renderItem={({ item }) => {
-            const { name: _organizerName, initials: organizerInitials } = getOrganizerDisplay(item.organizer);
-            const priceStr = formatPrice(item.price);
+            if (activeTab === 'clubs') {
+              const club = item as ClubResponse;
+              return (
+                <ClubCard
+                  club={club}
+                  onPress={() => handleNavigateClub(club.id)}
+                />
+              );
+            }
+
+            const event = item as EventItemResponse;
+            const { name: _organizerName, initials: organizerInitials } = getOrganizerDisplay(event.organizer);
+            const priceStr = formatPrice(event.price);
 
             const participantsList = [
               {
-                id: item.organizer.id,
+                id: event.organizer.id,
                 initials: organizerInitials,
-                bgColor: item.sport.color || '#b78ad6',
+                bgColor: event.sport.color || '#b78ad6',
               },
             ];
 
             return (
               <EventCard
-                id={item.id}
-                title={item.title}
+                id={event.id}
+                title={event.title}
                 price={priceStr}
-                time={formatTime(item.startsAt)}
-                location={item.venueName || 'Dakar'}
+                time={formatTime(event.startsAt)}
+                location={event.venueName || 'Dakar'}
                 distance={undefined}
                 participants={participantsList}
-                totalPlaces={item.capacity || 0}
-                sportLabel={item.sport.labelFr}
-                sportColor={item.sport.color}
-                badgeTime={`${getDayLabel(item.startsAt)} ${formatTime(item.startsAt)}`}
-                imageSource={getEventImageSource(item.coverUrl)}
-                onPress={() => handleNavigateEvent(item.id)}
+                totalPlaces={event.capacity || 0}
+                sportLabel={event.sport.labelFr}
+                sportColor={event.sport.color}
+                badgeTime={`${getDayLabel(event.startsAt)} ${formatTime(event.startsAt)}`}
+                imageSource={getEventImageSource(event.coverUrl)}
+                onPress={() => handleNavigateEvent(event.id)}
               />
             );
           }}
@@ -221,51 +263,53 @@ const styles = StyleSheet.create({
   },
   fixedHeader: {
     paddingHorizontal: Spacing.space20,
-    paddingTop: Spacing.space20,
+    paddingTop: Spacing.space12,
     backgroundColor: BackgroundThemes.Ivoire,
     zIndex: 10,
-    paddingBottom: Spacing.space12,
+    paddingBottom: 0,
   },
   scrollHeaderSection: {
-    marginBottom: Spacing.space20,
+    marginBottom: Spacing.space12,
   },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.space20,
+    marginBottom: Spacing.space12,
+  },
+  topCenter: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: Spacing.space8,
   },
   topRightActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexShrink: 0,
-  },
-  topLeft: {
-    flex: 1,
-    paddingRight: Spacing.space12,
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 1,
   },
   locationText: {
     fontFamily: Typography.meta.fontFamily,
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '700',
     color: Colors.light.ink3,
     letterSpacing: 1,
-    marginLeft: 4,
+    marginLeft: 2,
+    textTransform: 'uppercase',
   },
   mainTitle: {
     fontFamily: Typography.display.fontFamily,
-    fontSize: 28,
+    fontSize: 18,
     color: Colors.light.text,
+    textAlign: 'center',
   },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.space20,
+    marginBottom: Spacing.space12,
   },
   filtersScroll: {
     marginHorizontal: -Spacing.space20,

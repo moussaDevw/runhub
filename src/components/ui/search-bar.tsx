@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.light.backgroundElement, // Paper-2
     borderRadius: Radius.pill,
-    height: 48,
+    height: 44,
     paddingHorizontal: Spacing.space16,
     flex: 1, // To take up remaining space
   },

@@ -1,7 +1,7 @@
 import { Avatar } from '@/components/ui/avatar';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export type ParticipantStatus = 'Arrivé' | 'À venir';
 
@@ -11,6 +11,7 @@ interface ParticipantRowProps {
   avatarColor: string;
   paymentStatus: string;
   status: ParticipantStatus;
+  isLoading?: boolean;
   onCheckInToggle?: () => void;
 }
 
@@ -20,9 +21,9 @@ export function ParticipantRow({
   avatarColor,
   paymentStatus,
   status,
+  isLoading = false,
   onCheckInToggle,
 }: ParticipantRowProps) {
-
   const isArrived = status === 'Arrivé';
 
   return (
@@ -30,19 +31,27 @@ export function ParticipantRow({
       <Avatar initials={initials} size={48} backgroundColor={avatarColor} />
 
       <View style={styles.textContainer}>
-        <Text style={styles.name}>{name}</Text>
+        <Text style={styles.name} numberOfLines={1}>{name}</Text>
         <Text style={styles.paymentStatus}>{paymentStatus}</Text>
       </View>
 
-      {isArrived ? (
-        <View style={styles.statusArrived}>
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color="#2f6b4d" />
+        </View>
+      ) : isArrived ? (
+        <TouchableOpacity
+          style={styles.statusArrivedBtn}
+          activeOpacity={0.7}
+          onPress={onCheckInToggle}
+        >
           <Ionicons name="checkmark-circle" size={16} color="#2f6b4d" style={{ marginRight: 4 }} />
           <Text style={styles.statusArrivedText}>Arrivé</Text>
-        </View>
+        </TouchableOpacity>
       ) : (
         <TouchableOpacity
           style={styles.statusUpcomingBtn}
-          activeOpacity={0.8}
+          activeOpacity={0.7}
           onPress={onCheckInToggle}
         >
           <Text style={styles.statusUpcomingText}>À venir</Text>
@@ -63,6 +72,7 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
     marginLeft: Spacing.space12,
+    marginRight: Spacing.space12,
     justifyContent: 'center',
   },
   name: {
@@ -76,9 +86,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.light.ink3,
   },
-  statusArrived: {
+  loadingContainer: {
+    paddingHorizontal: Spacing.space16,
+    paddingVertical: 8,
+  },
+  statusArrivedBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#eaf3ed',
+    paddingHorizontal: Spacing.space12,
+    paddingVertical: 6,
+    borderRadius: 99,
   },
   statusArrivedText: {
     fontFamily: Typography.corpsGras.fontFamily,
@@ -97,3 +115,4 @@ const styles = StyleSheet.create({
     color: Colors.light.ink3,
   },
 });
+

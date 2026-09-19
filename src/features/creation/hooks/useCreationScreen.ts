@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useAllSports } from '@/features/sports/hooks/useSports';
+import { useMyClubs } from '@/features/clubs/hooks/useMyClubs';
 import { useEventCoverUpload } from './useEventCoverUpload';
 import { useEventCreationStore } from '../store/useEventCreationStore';
 import { useEventDetail } from '@/features/events/hooks/useEvents';
@@ -20,8 +21,15 @@ export function useCreationScreen() {
   // Cover photo upload hook
   const { isUploading, pickAndUploadImage, removeCover } = useEventCoverUpload();
 
+  // Clubs where user is owner or admin
+  const { data: myClubs = [] } = useMyClubs();
+  const myAdminClubs = useMemo(() => {
+    return myClubs.filter((c) => c.role === 'OWNER' || c.role === 'ADMIN');
+  }, [myClubs]);
+
   // Zustand Store selectors
   const editingEventId = useEventCreationStore((state) => state.editingEventId);
+  const clubId = useEventCreationStore((state) => state.clubId);
   const title = useEventCreationStore((state) => state.title);
   const description = useEventCreationStore((state) => state.description);
   const sportId = useEventCreationStore((state) => state.sportId);
@@ -38,8 +46,14 @@ export function useCreationScreen() {
   const updateField = useEventCreationStore((state) => state.updateField);
   const resetStore = useEventCreationStore((state) => state.resetStore);
 
-  const { id } = useGlobalSearchParams<{ id?: string }>();
+  const { id, clubId: clubIdParam } = useGlobalSearchParams<{ id?: string; clubId?: string }>();
 
+  // Pre-set clubId if passed in query param and not editing an event
+  useEffect(() => {
+    if (clubIdParam && !editingEventId && !id) {
+      updateField('clubId', clubIdParam);
+    }
+  }, [clubIdParam, editingEventId, id, updateField]);
 
   const { data: event, isLoading: isLoadingEvent } = useEventDetail(id || '');
 
@@ -52,6 +66,7 @@ export function useCreationScreen() {
   useEffect(() => {
     if (id && event && editingEventId !== id) {
       updateField('editingEventId', id);
+      updateField('clubId', event.clubId || undefined);
       updateField('title', event.title);
       updateField('description', event.description || '');
       updateField('sportId', event.sportId);
@@ -157,8 +172,16 @@ export function useCreationScreen() {
 
   const isLoadingData = isLoadingSports || (!!id && isLoadingEvent);
 
+  const selectedClub = useMemo(() => {
+    return myAdminClubs.find((c) => c.id === clubId);
+  }, [myAdminClubs, clubId]);
+
   return {
     editingEventId,
+    clubId,
+    myAdminClubs,
+    selectedClub,
+    setClubId: (id?: string) => updateField('clubId', id),
     title,
     description,
     sportId,

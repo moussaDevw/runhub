@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useEventCreationStore } from '@/features/creation/store/useEventCreationStore';
 import { useAllSports } from '@/features/sports/hooks/useSports';
+import { useClubDetails } from '@/features/clubs/hooks/useClubDetails';
 import { EventsApi } from '../api/events.api';
 import { getOrganizerDisplay } from '@/core/utils/user';
 
@@ -17,6 +18,7 @@ export function useEventPreview() {
   const title = useEventCreationStore((state) => state.title);
   const description = useEventCreationStore((state) => state.description);
   const sportId = useEventCreationStore((state) => state.sportId);
+  const clubId = useEventCreationStore((state) => state.clubId);
   const startsAt = useEventCreationStore((state) => state.startsAt);
   const venueName = useEventCreationStore((state) => state.venueName);
   const capacity = useEventCreationStore((state) => state.capacity);
@@ -28,6 +30,9 @@ export function useEventPreview() {
   const coverUrl = useEventCreationStore((state) => state.coverUrl);
   const resetStore = useEventCreationStore((state) => state.resetStore);
   const editingEventId = useEventCreationStore((state) => state.editingEventId);
+
+  // Load club details if event is organized by a club
+  const { data: club } = useClubDetails(clubId || '');
 
   // Load sports to match name and color
   const { data: sportsList = [] } = useAllSports();
@@ -46,6 +51,7 @@ export function useEventPreview() {
           title,
           description: description || undefined,
           sportId,
+          clubId: clubId || undefined,
           startsAt,
           venueName,
           capacity,
@@ -62,6 +68,7 @@ export function useEventPreview() {
           title,
           description: description || undefined,
           sportId,
+          clubId: clubId || undefined,
           startsAt,
           venueName,
           capacity,
@@ -109,10 +116,15 @@ export function useEventPreview() {
     }
   };
 
-  const { name: organizerName, initials: organizerInitials } = getOrganizerDisplay({
+  const userOrganizer = getOrganizerDisplay({
     firstName: user?.firstName || null,
     lastName: user?.lastName || null,
   });
+
+  const organizerName = club ? club.name : userOrganizer.name;
+  const organizerInitials = club
+    ? club.name.substring(0, 2).toUpperCase()
+    : userOrganizer.initials;
 
   return {
     title,
@@ -122,6 +134,7 @@ export function useEventPreview() {
     capacity,
     coverUrl,
     selectedSport,
+    club,
     organizerName,
     organizerInitials,
     isPublishing,

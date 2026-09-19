@@ -16,6 +16,9 @@ export function CreationScreen() {
   const insets = useSafeAreaInsets();
   const {
     editingEventId,
+    clubId,
+    myAdminClubs,
+    setClubId,
     title,
     description,
     sportId,
@@ -77,6 +80,68 @@ export function CreationScreen() {
           contentContainerStyle={[styles.scrollContent, { paddingBottom: 140 }]}
           showsVerticalScrollIndicator={false}
         >
+          {/* ORGANIZER SELECTOR (Personal vs Club) */}
+          {myAdminClubs.length > 0 && (
+            <View style={styles.organizerSection}>
+              <Text style={styles.label}>ORGANISÉ PAR</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.organizerRow}
+              >
+                <TouchableOpacity
+                  style={[styles.organizerChip, !clubId && styles.organizerChipActive]}
+                  activeOpacity={0.8}
+                  onPress={() => setClubId(undefined)}
+                >
+                  <Ionicons
+                    name="person-outline"
+                    size={14}
+                    color={!clubId ? '#ffffff' : Colors.light.text}
+                  />
+                  <Text
+                    style={[
+                      styles.organizerChipText,
+                      !clubId && styles.organizerChipTextActive,
+                    ]}
+                  >
+                    Moi (Personnel)
+                  </Text>
+                </TouchableOpacity>
+
+                {myAdminClubs.map((club) => {
+                  const isSelected = clubId === club.id;
+                  return (
+                    <TouchableOpacity
+                      key={club.id}
+                      style={[
+                        styles.organizerChip,
+                        isSelected && styles.organizerChipActive,
+                      ]}
+                      activeOpacity={0.8}
+                      onPress={() => setClubId(club.id)}
+                    >
+                      <Ionicons
+                        name="shield-outline"
+                        size={14}
+                        color={isSelected ? '#ffffff' : AccentColors.bissap}
+                      />
+                      <Text
+                        style={[
+                          styles.organizerChipText,
+                          isSelected && styles.organizerChipTextActive,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {club.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          )}
+
           <ImageUploadPlaceholder
             badgeText={t('creation.coverPhoto')}
             imageUrl={coverUrl}
@@ -242,6 +307,37 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: Spacing.space20,
+  },
+
+  organizerSection: {
+    marginBottom: Spacing.space20,
+  },
+  organizerRow: {
+    gap: Spacing.space8,
+    paddingVertical: 2,
+  },
+  organizerChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: Radius.pill,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e8e5e0',
+    gap: 6,
+  },
+  organizerChipActive: {
+    backgroundColor: '#232220',
+    borderColor: '#232220',
+  },
+  organizerChipText: {
+    fontFamily: Typography.corpsGras.fontFamily,
+    fontSize: 13,
+    color: Colors.light.text,
+  },
+  organizerChipTextActive: {
+    color: '#ffffff',
   },
 
   label: {

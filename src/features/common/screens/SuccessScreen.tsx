@@ -10,17 +10,17 @@ export function SuccessScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const { type, title, capacity, slug, time } = useGlobalSearchParams<{
+  const { type, title, capacity, slug, time, id } = useGlobalSearchParams<{
     type?: string;
     title?: string;
     capacity?: string;
     slug?: string;
     time?: string;
+    id?: string;
   }>();
-  console.log({ type, title, capacity, slug, time })
-  const isPublish = type === 'publish';
 
-  console.log('SuccessScreen params:', { type, title, capacity, slug, time });
+  const isPublish = type === 'publish';
+  const targetId = id || slug || '';
 
   const eventTitle = title ? decodeURIComponent(title) : 'Sunset Run · Corniche';
   const eventCapacity = (capacity && capacity !== '0' && capacity !== 'null' && capacity !== 'undefined' && capacity !== '') ? capacity : null;
@@ -51,47 +51,48 @@ export function SuccessScreen() {
         contentFit="cover"
       />
 
-      <View style={[
-        styles.contentContainer,
-        {
-          paddingTop: Math.max(insets.top, 20),
-          paddingBottom: Math.max(insets.bottom, Spacing.space20)
-        }
-      ]}>
+      {/* DARK OVERLAY */}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(29, 22, 28, 0.75)' }]} />
 
-        {/* CENTER CONTENT */}
+      <View style={[styles.contentContainer, { paddingTop: insets.top, paddingBottom: insets.bottom + 20 }]}>
         <View style={styles.centerContent}>
+          {/* Check Circle */}
           <View style={styles.checkCircle}>
-            <Ionicons name={isPublish ? "flash" : "checkmark"} size={48} color="#ffffff" />
+            <Ionicons name="checkmark" size={48} color="#ffffff" />
           </View>
 
+          {/* Title */}
           <Text style={styles.title}>
             {isPublish ? t('success.publish.title') : t('success.join.title')}
           </Text>
 
-          {isPublish ? (
-            <>
-              <Text style={styles.subtitle}>
+          {/* Subtitle */}
+          <Text style={styles.subtitle}>
+            {isPublish ? (
+              <>
                 <Text style={styles.boldText}>{eventTitle}</Text>
-                {eventCapacity 
+                {eventCapacity
                   ? t('success.publish.subtitleSuffix', { capacity: eventCapacity })
-                  : t('success.publish.subtitleSuffixUnlimited')
-                }
-              </Text>
-              <View style={styles.linkPill}>
-                <Text style={styles.linkPillText}>yallaa.app/e/{eventSlug}</Text>
-              </View>
-            </>
-          ) : (
-            <Text style={styles.subtitle}>
-              {t('success.join.prefix')}
-              <Text style={styles.boldText}>{eventTitle}</Text>
-              {t('success.join.suffix', { time: eventTime })}
-            </Text>
+                  : t('success.publish.subtitleSuffixUnlimited')}
+              </>
+            ) : (
+              <>
+                {t('success.join.prefix')}
+                <Text style={styles.boldText}>{eventTitle}</Text>
+                {t('success.join.suffix', { time: eventTime })}
+              </>
+            )}
+          </Text>
+
+          {/* Link Pill (Only for publish) */}
+          {isPublish && (
+            <TouchableOpacity style={styles.linkPill} activeOpacity={0.8} onPress={handleShare}>
+              <Text style={styles.linkPillText}>yallaa.app/e/{eventSlug}</Text>
+            </TouchableOpacity>
           )}
         </View>
 
-        {/* BOTTOM ACTIONS */}
+        {/* Action Buttons */}
         <View style={styles.actionsContainer}>
           {isPublish ? (
             <>
@@ -124,7 +125,7 @@ export function SuccessScreen() {
               <TouchableOpacity
                 style={styles.primaryButton}
                 activeOpacity={0.8}
-                onPress={() => router.push('/ticket/1' as any)}
+                onPress={() => router.push(`/ticket/${targetId}` as any)}
               >
                 <Text style={styles.primaryButtonText}>{t('success.join.viewTicket')}</Text>
               </TouchableOpacity>

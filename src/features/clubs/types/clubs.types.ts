@@ -13,6 +13,21 @@ export interface CreateClubPayload {
   coords?: Coords;
 }
 
+export interface ClubJoinRequest {
+  id: string;
+  clubId: string;
+  userId: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  createdAt: string;
+  user: {
+    id: string;
+    username: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl: string | null;
+  };
+}
+
 export interface ClubResponse {
   id: string;
   name: string;
@@ -29,4 +44,9 @@ export interface ClubResponse {
     followers: number;
     events: number;
   };
+  isMember?: boolean;
+  isFollower?: boolean;
+  joinRequestStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | null;
+  myRole?: 'OWNER' | 'ADMIN' | 'MEMBER' | null;
+  verified: boolean;
 }

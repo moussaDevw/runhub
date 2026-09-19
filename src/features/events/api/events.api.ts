@@ -37,6 +37,13 @@ export interface EventResponse {
   visibility: 'public' | 'unlisted';
   shareSlug: string;
   sportId: string;
+  clubId?: string | null;
+  club?: {
+    id: string;
+    name: string;
+    handle: string;
+    logoUrl: string | null;
+  } | null;
   organizerId: string;
   googlePlaceId: string | null;
   city: string | null;
@@ -81,6 +88,7 @@ export interface PaginatedResponse<T> {
 export interface FindAllEventsParams {
   q?: string;
   sportId?: string;
+  clubId?: string;
   dateFilter?: 'today' | 'weekend' | 'week' | 'month';
   page?: number;
   limit?: number;
@@ -111,8 +119,12 @@ export interface RegistrationStatusResponse {
 
 export interface ParticipantResponse {
   id: string;
+  eventId: string;
+  userId: string;
   ticketCode: string;
   status: string;
+  checkedInAt?: string | null;
+  checkedInById?: string | null;
   createdAt: string;
   user: {
     id: string;
@@ -120,6 +132,23 @@ export interface ParticipantResponse {
     firstName: string | null;
     lastName: string | null;
     avatarUrl: string | null;
+  };
+}
+
+export interface CheckInScanResult {
+  success: boolean;
+  status: 'valid' | 'already_used' | 'cancelled';
+  message: string;
+  checkedInAt?: string | null;
+  registration: ParticipantResponse & {
+    event?: {
+      id: string;
+      title: string;
+      startsAt: string;
+      price: number;
+      currency: string;
+      venueName: string | null;
+    };
   };
 }
 
@@ -168,6 +197,7 @@ export const EventsApi = {
     const searchParams = new URLSearchParams();
     if (params?.q) searchParams.set('q', params.q);
     if (params?.sportId) searchParams.set('sportId', params.sportId);
+    if (params?.clubId) searchParams.set('clubId', params.clubId);
     if (params?.dateFilter) searchParams.set('dateFilter', params.dateFilter);
     if (params?.page) searchParams.set('page', String(params.page));
     if (params?.limit) searchParams.set('limit', String(params.limit));
@@ -190,7 +220,7 @@ export const EventsApi = {
     return apiClient<EventItemResponse[]>('/events/mine');
   },
 
-  // --- Registration ---
+  // --- Registration & Check-in ---
 
   /**
    * Inscrire l'utilisateur connecté à un événement
@@ -220,6 +250,25 @@ export const EventsApi = {
    */
   async getParticipants(eventId: string): Promise<ParticipantResponse[]> {
     return apiClient<ParticipantResponse[]>(`/events/${eventId}/participants`);
+  },
+
+  /**
+   * Basculer le statut de check-in d'un participant (Arrivé / À venir)
+   */
+  async toggleCheckIn(eventId: string, registrationId: string): Promise<ParticipantResponse> {
+    return apiClient<ParticipantResponse>(`/events/${eventId}/registrations/${registrationId}/check-in`, {
+      method: 'POST',
+    });
+  },
+
+  /**
+   * Valider un billet par scan de code QR ou code texte
+   */
+  async scanTicket(eventId: string, ticketCode: string): Promise<CheckInScanResult> {
+    return apiClient<CheckInScanResult>(`/events/${eventId}/check-in/scan`, {
+      method: 'POST',
+      body: { ticketCode },
+    });
   },
 
   /**

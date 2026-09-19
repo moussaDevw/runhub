@@ -1,13 +1,13 @@
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { AccentColors, Colors, Spacing, Typography } from '@/constants/theme';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-interface SegmentedControlProps {
+interface TabSwitcherProps {
   options: string[];
   selectedIndex: number;
   onChange: (index: number) => void;
 }
 
-export function SegmentedControl({ options, selectedIndex, onChange }: SegmentedControlProps) {
+export function TabSwitcher({ options, selectedIndex, onChange }: TabSwitcherProps) {
   return (
     <View style={styles.container}>
       {options.map((option, index) => {
@@ -15,13 +15,14 @@ export function SegmentedControl({ options, selectedIndex, onChange }: Segmented
         return (
           <TouchableOpacity
             key={option}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
             onPress={() => onChange(index)}
-            style={[styles.segment, isSelected && styles.segmentSelected]}
+            style={styles.tab}
           >
-            <Text style={[styles.text, isSelected && styles.textSelected]}>
+            <Text style={[styles.tabText, isSelected && styles.tabTextSelected]}>
               {option}
             </Text>
+            {isSelected && <View style={styles.activeIndicator} />}
           </TouchableOpacity>
         );
       })}
@@ -32,32 +33,31 @@ export function SegmentedControl({ options, selectedIndex, onChange }: Segmented
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: Colors.light.backgroundElement,
-    borderRadius: 99,
-    padding: 3,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ebe8e4',
     marginBottom: Spacing.space12,
   },
-  segment: {
+  tab: {
     flex: 1,
-    paddingVertical: 8,
     alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 99,
+    paddingVertical: 10,
+    position: 'relative',
   },
-  segmentSelected: {
-    backgroundColor: '#ffffff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  text: {
+  tabText: {
     fontFamily: Typography.corpsGras.fontFamily,
-    fontSize: 13,
+    fontSize: 15,
     color: Colors.light.ink3,
   },
-  textSelected: {
+  tabTextSelected: {
     color: Colors.light.text,
+  },
+  activeIndicator: {
+    position: 'absolute',
+    bottom: -1,
+    left: '25%',
+    right: '25%',
+    height: 2.5,
+    backgroundColor: AccentColors.bissap,
+    borderRadius: 2,
   },
 });

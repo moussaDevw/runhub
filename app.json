@@ -11,7 +11,8 @@
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.musadiagnesorganization.runhub",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "RunHub a besoin d'accéder à votre caméra pour scanner les billets et QR codes des participants."
       }
     },
     "android": {
@@ -22,7 +23,10 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "output": "static",
@@ -38,6 +42,12 @@
             "image": "./assets/images/splash-icon.png",
             "imageWidth": 76
           }
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "RunHub a besoin d'accéder à votre caméra pour scanner les billets et QR codes des participants."
         }
       ],
       "expo-image",
