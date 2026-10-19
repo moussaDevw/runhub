@@ -4,21 +4,24 @@ import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 import { Avatar } from '@/components/ui/avatar';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { IconButton } from '@/components/ui/icon-button';
-import { EventCard } from '@/components/ui/event-card';
+import { EventCard } from '@/features/events/components';
 import { Colors, AccentColors, BackgroundThemes, Spacing, Typography } from '@/constants/theme';
 import { formatPrice, formatTime, getDayLabel } from '@/core/utils/locale';
 import { getOrganizerDisplay } from '@/core/utils/user';
 import { getEventImageSource } from '@/features/events/utils/event.utils';
+import { ClubDetailSkeleton } from '../components/club-detail-skeleton';
 import { useClubDetails } from '../hooks/useClubDetails';
 import { useJoinRequests } from '../hooks/useJoinRequests';
 import { useEventsList } from '@/features/events/hooks/useEvents';
 import { ClubsApi } from '../api/clubs.api';
 
 export function ClubDetailScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
@@ -65,8 +68,9 @@ export function ClubDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={AccentColors.bissap} />
+      <View style={styles.container}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ClubDetailSkeleton />
       </View>
     );
   }
@@ -74,9 +78,9 @@ export function ClubDetailScreen() {
   if (isError || !club) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ color: Colors.light.text, fontFamily: Typography.corps.fontFamily }}>Impossible de charger le club.</Text>
+        <Text style={{ color: Colors.light.text, fontFamily: Typography.corps.fontFamily }}>{t('club.errorLoad')}</Text>
         <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20 }}>
-          <Text style={{ color: AccentColors.bissap, fontFamily: Typography.corpsGras.fontFamily }}>Retour</Text>
+          <Text style={{ color: AccentColors.bissap, fontFamily: Typography.corpsGras.fontFamily }}>{t('common.back')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -120,18 +124,18 @@ export function ClubDetailScreen() {
           </View>
 
           <Text style={styles.description}>
-            {club.bio || 'Aucune description fournie pour ce club.'}
+            {club.bio || t('club.noDescription')}
           </Text>
 
           {/* Stats Row */}
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{club._count?.members || 0}</Text>
-              <Text style={styles.statLabel}>membres</Text>
+              <Text style={styles.statLabel}>{t('club.members')}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{club._count?.events || 0}</Text>
-              <Text style={styles.statLabel}>events</Text>
+              <Text style={styles.statLabel}>{t('club.events')}</Text>
             </View>
           </View>
 
@@ -140,7 +144,7 @@ export function ClubDetailScreen() {
             <View style={styles.adminSection}>
               <View style={styles.adminSectionHeader}>
                 <Ionicons name="settings-outline" size={16} color={Colors.light.ink3} />
-                <Text style={styles.adminSectionTitle}>Gestion du club</Text>
+                <Text style={styles.adminSectionTitle}>{t('club.management')}</Text>
               </View>
 
               <View style={styles.adminCardsContainer}>
@@ -155,11 +159,11 @@ export function ClubDetailScreen() {
                       <Ionicons name="people-outline" size={20} color={AccentColors.bissap} />
                     </View>
                     <View>
-                      <Text style={styles.adminCardTitle}>Demandes d'adhésion</Text>
+                      <Text style={styles.adminCardTitle}>{t('club.joinRequests')}</Text>
                       <Text style={styles.adminCardSub}>
                         {pendingCount > 0
-                          ? `${pendingCount} demande${pendingCount > 1 ? 's' : ''} en attente`
-                          : 'Aucune demande en attente'}
+                          ? t('club.pendingRequestsCount', { count: pendingCount })
+                          : t('club.noPendingRequests')}
                       </Text>
                     </View>
                   </View>
@@ -184,8 +188,8 @@ export function ClubDetailScreen() {
                       <Ionicons name="calendar-outline" size={20} color={AccentColors.indigoWolof} />
                     </View>
                     <View>
-                      <Text style={styles.adminCardTitle}>Créer un événement</Text>
-                      <Text style={styles.adminCardSub}>Publier une sortie au nom du club</Text>
+                      <Text style={styles.adminCardTitle}>{t('club.createEvent')}</Text>
+                      <Text style={styles.adminCardSub}>{t('club.createEventSub')}</Text>
                     </View>
                   </View>
                   <Ionicons name="chevron-forward" size={18} color={Colors.light.ink3} />
@@ -210,11 +214,11 @@ export function ClubDetailScreen() {
                 {joinMutation.isPending ? (
                   <ActivityIndicator size="small" color={club.isMember ? '#e06666' : '#ffffff'} />
                 ) : club.isMember ? (
-                  <Text style={styles.leaveButtonText}>Quitter le club</Text>
+                  <Text style={styles.leaveButtonText}>{t('club.leave')}</Text>
                 ) : club.joinRequestStatus === 'PENDING' ? (
-                  <Text style={styles.pendingButtonText}>Demande envoyée</Text>
+                  <Text style={styles.pendingButtonText}>{t('club.requestSent')}</Text>
                 ) : (
-                  <Text style={styles.joinButtonText}>Rejoindre le club</Text>
+                  <Text style={styles.joinButtonText}>{t('club.join')}</Text>
                 )}
               </TouchableOpacity>
 
@@ -229,9 +233,9 @@ export function ClubDetailScreen() {
                 {followMutation.isPending ? (
                   <ActivityIndicator size="small" color={club.isFollower ? Colors.light.text : '#ffffff'} />
                 ) : club.isFollower ? (
-                  <Text style={styles.subscribedText}>✓ Abonné</Text>
+                  <Text style={styles.subscribedText}>{t('club.subscribed')}</Text>
                 ) : (
-                  <Text style={styles.followButtonText}>Suivre le club</Text>
+                  <Text style={styles.followButtonText}>{t('club.follow')}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -240,7 +244,7 @@ export function ClubDetailScreen() {
           {/* === UPCOMING EVENTS OF THE CLUB === */}
           <View style={styles.eventsSection}>
             <View style={styles.eventsHeaderRow}>
-              <Text style={styles.sectionTitle}>Événements du club</Text>
+              <Text style={styles.sectionTitle}>{t('club.eventsTitle')}</Text>
               <Text style={styles.eventsCountBadge}>{clubEvents.length}</Text>
             </View>
 
@@ -249,13 +253,13 @@ export function ClubDetailScreen() {
             ) : clubEvents.length === 0 ? (
               <View style={styles.emptyEventsBox}>
                 <Ionicons name="calendar-outline" size={36} color={Colors.light.ink3} style={{ marginBottom: 8 }} />
-                <Text style={styles.emptyEventsText}>Aucun événement prévu pour le moment.</Text>
+                <Text style={styles.emptyEventsText}>{t('club.noEvents')}</Text>
                 {isAdminOrOwner && (
                   <TouchableOpacity
                     style={styles.createEventLink}
                     onPress={() => router.push(`/event/create?clubId=${id}` as any)}
                   >
-                    <Text style={styles.createEventLinkText}>+ Organiser la première sortie</Text>
+                    <Text style={styles.createEventLinkText}>{t('club.organizeFirstEvent')}</Text>
                   </TouchableOpacity>
                 )}
               </View>

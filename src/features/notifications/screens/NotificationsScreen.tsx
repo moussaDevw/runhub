@@ -1,115 +1,140 @@
-import { NotificationItem } from '@/components/ui/notification-item';
-import { Colors,  AccentColors, Spacing, Typography } from '@/constants/theme';
+import { HStack, Screen, VStack } from '@/components/layout';
+import { AccentColors, Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { FormattedNotificationItem, useNotificationsScreen } from '@/features/notifications';
+import { NotificationItem } from '@/features/notifications/components';
+import { useTheme } from '@/hooks/use-theme';
 import { Ionicons } from '@expo/vector-icons';
-import { Stack, useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Stack } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 export function NotificationsScreen() {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+  const theme = useTheme();
+
+  const {
+    notifications,
+    hasUnread,
+    isLoading,
+    isRefetching,
+    isMarkingAllAsRead,
+    refetch,
+    handleBack,
+    handleMarkAllAsRead,
+  } = useNotificationsScreen();
+
+  const header = (
+    <HStack
+      align="center"
+      justify="space-between"
+      style={[
+        styles.header,
+        { backgroundColor: theme.background, borderBottomColor: theme.line },
+      ]}
+    >
+      <HStack align="center">
+        <TouchableOpacity
+          onPress={handleBack}
+          style={styles.backButton}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back', { defaultValue: 'Retour' })}
+        >
+          <Ionicons name="chevron-back" size={24} color={theme.text} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>
+          {t('notifications.title', { defaultValue: 'Notifications' })}
+        </Text>
+      </HStack>
+
+      {hasUnread && (
+        <TouchableOpacity
+          onPress={handleMarkAllAsRead}
+          hitSlop={8}
+          accessibilityRole="button"
+          disabled={isMarkingAllAsRead}
+        >
+          <Text style={styles.headerActionText}>
+            {t('notifications.readAll', { defaultValue: 'TOUT MARQUER COMME LU' })}
+          </Text>
+        </TouchableOpacity>
+      )}
+    </HStack>
+  );
 
   return (
-    <View style={styles.container}>
+    <Screen
+      safeTop
+      safeBottom
+      scrollable
+      header={header}
+      refreshing={isRefetching}
+      onRefresh={refetch}
+    >
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* HEADER */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, Spacing.space12) }]}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={24} color={Colors.light.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Notifications</Text>
+      {isLoading ? (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={AccentColors.bissap} />
         </View>
-        <TouchableOpacity>
-          <Text style={styles.headerActionText}>TOUT LIRE</Text>
-        </TouchableOpacity>
-      </View>
+      ) : notifications.length === 0 ? (
+        <VStack align="center" justify="center" style={styles.emptyContainer}>
+          <View style={[styles.emptyIconCircle, { backgroundColor: theme.backgroundElement }]}>
+            <Ionicons name="notifications-off-outline" size={40} color={Colors.light.ink3} />
+          </View>
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>
+            {t('notifications.emptyTitle', { defaultValue: 'Aucune notification' })}
+          </Text>
+          <Text style={[styles.emptySubtitle, { color: Colors.light.ink3 }]}>
+            {t('notifications.emptySubtitle', {
+              defaultValue: 'Vous serez notifié des nouvelles inscriptions, messages et rappels.',
+            })}
+          </Text>
+        </VStack>
+      ) : (
+        notifications.map((item: FormattedNotificationItem) => {
+          const textElement = item.actorName ? (
+            <Text style={{ color: theme.textSecondary }}>
+              <Text style={[styles.boldText, { color: theme.text }]}>{item.actorName} </Text>
+              {item.body}
+            </Text>
+          ) : (
+            item.body
+          );
 
-      {/* LIST */}
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <NotificationItem
-          type="system"
-          isRead={false}
-          iconName="time-outline"
-          iconBgColor="#b8324f"
-          text="Ton run commence dans 2h. RDV au Monument à 18h30."
-          time="Il y a 12 min"
-        />
-
-        <NotificationItem
-          type="user"
-          isRead={false}
-          userInitials="AD"
-          userBgColor="#f2784f"
-          subIconName="add"
-          subIconBgColor={Colors.light.text}
-          text={<Text><Text style={styles.boldText}>Aïssatou Diallo</Text> a rejoint Sunset Run · Corniche.</Text>}
-          time="Il y a 40 min"
-        />
-
-        <NotificationItem
-          type="system"
-          isRead={false}
-          iconName="checkmark"
-          iconBgColor="#2c7a55"
-          text="Une place s'est libérée sur Yoga au lever du soleil 🧘"
-          time="Il y a 2h"
-        />
-
-        <NotificationItem
-          type="user"
-          isRead={true}
-          userInitials="MS"
-          userBgColor="#c64a86"
-          subIconName="chatbubble"
-          subIconBgColor={Colors.light.text}
-          text={<Text><Text style={styles.boldText}>Moussa Sow</Text> a écrit dans la discussion : « Quelqu&apos;un fait le 10k ? »</Text>}
-          time="Il y a 5h"
-        />
-
-        <NotificationItem
-          type="system"
-          isRead={true}
-          iconName="card-outline"
-          iconBgColor="#3b82f6"
-          text="Paiement de 2 000 F confirmé pour Foot à 5 du jeudi."
-          time="Hier"
-        />
-
-        <NotificationItem
-          type="user"
-          isRead={true}
-          userInitials="FN"
-          userBgColor="#2c7a55"
-          subIconName="add"
-          subIconBgColor="#b78ad6"
-          text={<Text><Text style={styles.boldText}>Fatou Ndiaye</Text> t&apos;a invité à Playground 3v3.</Text>}
-          time="Hier"
-        />
-      </ScrollView>
-    </View>
+          return (
+            <NotificationItem
+              key={item.id}
+              type={item.type}
+              isRead={item.isRead}
+              time={item.time}
+              text={textElement}
+              iconName={item.iconName}
+              iconBgColor={item.iconBgColor}
+              userInitials={item.userInitials}
+              userBgColor={item.userBgColor}
+              subIconName={item.subIconName}
+              subIconBgColor={item.subIconBgColor}
+              onPress={item.onPress}
+            />
+          );
+        })
+      )}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f4',
-  },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: Spacing.space20,
-    paddingBottom: Spacing.space16,
-    backgroundColor: '#f5f5f4',
+    paddingVertical: Spacing.space12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.backgroundElement,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   backButton: {
     marginRight: Spacing.space12,
@@ -117,7 +142,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: Typography.titre.fontFamily,
     fontSize: 20,
-    color: Colors.light.text,
   },
   headerActionText: {
     fontFamily: Typography.corpsGras.fontFamily,
@@ -127,7 +151,36 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   boldText: {
+    fontFamily: Typography.corpsGras.fontFamily,
     fontWeight: '700',
-    color: Colors.light.text,
+  },
+  centerContainer: {
+    paddingVertical: Spacing.space32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyContainer: {
+    paddingHorizontal: Spacing.space32,
+    paddingVertical: Spacing.six,
+  },
+  emptyIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.space16,
+  },
+  emptyTitle: {
+    fontFamily: Typography.titre.fontFamily,
+    fontSize: 18,
+    marginBottom: Spacing.space8,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontFamily: Typography.corps.fontFamily,
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
   },
 });

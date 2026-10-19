@@ -2,15 +2,17 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { PaginationDots } from '@/components/ui/pagination-dots';
-import { SportCard } from '@/components/ui/sport-card';
-import { Colors, BackgroundThemes, Spacing, Typography } from '@/constants/theme';
+import { SportCard, SportCardSkeleton } from '@/features/sports/components';
+import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useAllSports, useUpdateUserSports } from '@/features/sports/hooks/useSports';
 
 export function SportsSelectionScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { user, refreshUser } = useAuth();
   const { data: sportsList = [], isLoading: isLoadingSports } = useAllSports();
@@ -20,7 +22,6 @@ export function SportsSelectionScreen() {
     () => user?.sports?.map(s => s.id) ?? []
   );
   const [error, setError] = useState<string | null>(null);
-
 
   const toggleSport = (sportId: string) => {
     setSelectedSportIds(prev =>
@@ -42,7 +43,7 @@ export function SportsSelectionScreen() {
       await refreshUser();
       router.replace('/(tabs)/explorer' as any);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Erreur lors de l'enregistrement de vos sports.";
+      const message = err instanceof Error ? err.message : t('sports.errorSave');
       setError(message);
     }
   };
@@ -53,9 +54,26 @@ export function SportsSelectionScreen() {
         <PaginationDots total={2} activeIndex={1} variant="dark" />
       </View>
 
+      <View style={styles.textSection}>
+        <Text style={styles.title}>{t('sports.title')}</Text>
+        <Text style={styles.subtitle}>{t('sports.subtitle')}</Text>
+        {error && <Text style={styles.errorText}>{error}</Text>}
+      </View>
+
       {isLoadingSports ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={Colors.light.text} />
+        <View style={styles.skeletonGrid}>
+          <View style={styles.row}>
+            <View style={styles.cardContainer}><SportCardSkeleton /></View>
+            <View style={styles.cardContainer}><SportCardSkeleton /></View>
+          </View>
+          <View style={styles.row}>
+            <View style={styles.cardContainer}><SportCardSkeleton /></View>
+            <View style={styles.cardContainer}><SportCardSkeleton /></View>
+          </View>
+          <View style={styles.row}>
+            <View style={styles.cardContainer}><SportCardSkeleton /></View>
+            <View style={styles.cardContainer}><SportCardSkeleton /></View>
+          </View>
         </View>
       ) : (
         <FlatList
@@ -64,15 +82,6 @@ export function SportsSelectionScreen() {
           numColumns={2}
           columnWrapperStyle={styles.row}
           contentContainerStyle={styles.listContent}
-          ListHeaderComponent={
-            <View style={styles.textSection}>
-              <Text style={styles.title}>Tu kiffes quoi ?</Text>
-              <Text style={styles.subtitle}>
-                On personnalise ton feed. Choisis au moins 2 sports pour continuer.
-              </Text>
-              {error && <Text style={styles.errorText}>{error}</Text>}
-            </View>
-          }
           renderItem={({ item }) => (
             <View style={styles.cardContainer}>
               <SportCard
@@ -91,10 +100,10 @@ export function SportsSelectionScreen() {
         <Button
           label={
             updateSportsMutation.isPending
-              ? 'Enregistrement...'
+              ? t('sports.saving')
               : selectedCount > 0
-                ? `Continuer · ${selectedCount} choisis`
-                : 'Continuer'
+                ? t('sports.continueWithCount', { count: selectedCount })
+                : t('sports.continue')
           }
           variant="primary"
           disabled={!isButtonEnabled}
@@ -109,38 +118,41 @@ export function SportsSelectionScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BackgroundThemes.Creme, // #faf6f0
+    backgroundColor: Colors.light.background,
   },
   header: {
     paddingHorizontal: Spacing.space20,
     paddingTop: Spacing.space12,
-    paddingBottom: Spacing.space20,
+    paddingBottom: Spacing.space12,
   },
   textSection: {
     paddingHorizontal: Spacing.space20,
-    marginBottom: Spacing.space26,
+    marginBottom: Spacing.space16,
   },
   title: {
     fontFamily: Typography.titre.fontFamily,
     fontSize: Typography.titre.fontSize,
-    color: Colors.light.text, // Nuit text color
-    marginBottom: Spacing.space8,
+    color: Colors.light.text,
+    marginBottom: Spacing.space4,
   },
   subtitle: {
     fontFamily: Typography.corps.fontFamily,
-    fontSize: Typography.corps.fontSize,
-    color: '#65625e', // Ink-2 for softer text
-    lineHeight: 22,
+    fontSize: 15,
+    color: Colors.light.textSecondary,
+    lineHeight: 20,
+  },
+  skeletonGrid: {
+    paddingBottom: 100,
   },
   listContent: {
-    paddingBottom: 100, // Space for the fixed footer
+    paddingBottom: 100,
   },
   row: {
-    flex: 1,
+    flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.space20,
-    marginBottom: Spacing.space12,
-    gap: Spacing.space12,
+    marginBottom: Spacing.space8,
+    gap: Spacing.space8,
   },
   cardContainer: {
     flex: 1,
@@ -154,15 +166,10 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.space32,
     paddingTop: Spacing.space16,
   },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   errorText: {
     fontFamily: Typography.meta.fontFamily,
     fontSize: 13,
-    color: '#C8392F',
+    color: Colors.light.danger,
     marginTop: Spacing.space12,
   },
 });

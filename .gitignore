@@ -39,5 +39,10 @@ yarn-error.*
 example
 
 # generated native folders
+google-services.json
+GoogleService-Info.plist
+runhub-7d2af-firebase-adminsdk-fbsvc-2cb5b5d9b6.json
+*-firebase-adminsdk-*.json
+*-adminsdk-*.json
 /ios
 /android

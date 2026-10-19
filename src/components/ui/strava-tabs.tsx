@@ -1,4 +1,4 @@
-import { AccentColors, Colors, Spacing, Typography } from '@/constants/theme';
+import { AccentColors, Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface TabSwitcherProps {
@@ -34,18 +34,18 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#ebe8e4',
-    marginBottom: Spacing.space12,
+    borderBottomColor: Colors.light.line,
+    marginBottom: Spacing.space8,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 8,
     position: 'relative',
   },
   tabText: {
     fontFamily: Typography.corpsGras.fontFamily,
-    fontSize: 15,
+    fontSize: 14,
     color: Colors.light.ink3,
   },
   tabTextSelected: {
@@ -58,6 +58,6 @@ const styles = StyleSheet.create({
     right: '25%',
     height: 2.5,
     backgroundColor: AccentColors.bissap,
-    borderRadius: 2,
+    borderRadius: Radius.pill,
   },
 });

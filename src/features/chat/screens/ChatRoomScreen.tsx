@@ -1,5 +1,6 @@
 import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 import { BackgroundThemes, Spacing, AccentColors } from '@/constants/theme';
 import { ChatHeader } from '@/components/chat/chat-header';
@@ -11,6 +12,7 @@ import { getEventImageSource } from '@/features/events/utils/event.utils';
 
 export function ChatRoomScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams();
   const eventId = typeof id === 'string' ? id : '';
 
@@ -24,14 +26,16 @@ export function ChatRoomScreen() {
     );
   }
 
+  const participantsCount = event?._count?.registrations || 1;
+
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       
       {/* HEADER */}
       <ChatHeader 
-        title={event?.title || 'Discussion'}
-        subtitle={`${event?._count?.registrations || 1} participant(s) • ${event?.sport?.labelFr || ''}`}
+        title={event?.title || t('chat.title')}
+        subtitle={`${t('chat.participantsCount', { count: participantsCount })} • ${event?.sport?.labelFr || ''}`}
         imageSource={getEventImageSource(event?.coverUrl)}
         onEventPress={() => router.back()} // Go back to event details
       />
@@ -46,14 +50,14 @@ export function ChatRoomScreen() {
           contentContainerStyle={styles.messagesContent}
           showsVerticalScrollIndicator={false}
         >
-          <SystemMessage text="AUJOURD'HUI" />
-          <SystemMessage text={`Tu as rejoint la discussion - ${event?._count?.registrations || 1} membre(s)`} />
+          <SystemMessage text={t('chat.today')} />
+          <SystemMessage text={t('chat.joinedDiscussion', { count: participantsCount })} />
 
           <ChatMessage 
             id="1"
             isSender={false}
             text="Salut la team ✌️ RDV à l'heure indiquée, on démarre pile à l'heure !"
-            user={{ name: event?.organizer?.firstName || 'Organisateur', role: 'orga', initials: `${(event?.organizer?.firstName || 'O')[0]}${(event?.organizer?.lastName || 'R')[0]}`.toUpperCase(), bgColor: event?.sport?.color || '#f2784f' }}
+            user={{ name: event?.organizer?.firstName || t('chat.organizer'), role: 'orga', initials: `${(event?.organizer?.firstName || 'O')[0]}${(event?.organizer?.lastName || 'R')[0]}`.toUpperCase(), bgColor: event?.sport?.color || '#f2784f' }}
           />
 
           <ChatMessage 

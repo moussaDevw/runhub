@@ -126,9 +126,40 @@ export function getDayLabel(isoString: string): string {
   return day.replace('.', '').toUpperCase();
 }
 
-/* ------------------------------------------------------------------ */
-/*  Price formatting                                                   */
-/* ------------------------------------------------------------------ */
+/**
+ * Format an ISO date-time string as a friendly relative time (e.g., "Il y a 5 min", "Il y a 2h", "Hier").
+ */
+export function formatRelativeTime(isoString: string): string {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const en = isEnglish();
+
+  if (diffMinutes < 1) {
+    return en ? 'Just now' : "À l'instant";
+  }
+  if (diffMinutes < 60) {
+    return en ? `${diffMinutes}m ago` : `Il y a ${diffMinutes} min`;
+  }
+  if (diffHours < 24) {
+    return en ? `${diffHours}h ago` : `Il y a ${diffHours}h`;
+  }
+  if (diffDays === 1) {
+    return en ? 'Yesterday' : 'Hier';
+  }
+  if (diffDays < 7) {
+    return en ? `${diffDays}d ago` : `Il y a ${diffDays} j`;
+  }
+
+  return date.toLocaleDateString(getDeviceLocale(), {
+    day: 'numeric',
+    month: 'short',
+  });
+}
 
 /**
  * Format a numeric price for display.

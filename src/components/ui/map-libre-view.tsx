@@ -4,34 +4,7 @@ import * as Location from 'expo-location';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View, StyleProp, ViewStyle } from 'react-native';
 
-// OpenStreetMap style configuration
-const OSM_STYLE = {
-  version: 8 as const,
-  sources: {
-    osm: {
-      type: 'raster' as const,
-      tiles: [
-        'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      ],
-      tileSize: 256,
-      attribution: '© OpenStreetMap contributors',
-    },
-  },
-  layers: [
-    {
-      id: 'osm',
-      type: 'raster' as const,
-      source: 'osm',
-      minzoom: 0,
-      maxzoom: 19,
-    },
-  ],
-};
-
-// Dakar coordinates fallback
-const DAKAR_CENTER: [number, number] = [-17.4677, 14.7167]; // [lng, lat]
+import { DAKAR_CENTER_LNG_LAT, OSM_RASTER_STYLE } from '@/constants/map';
 
 export interface MapMarker {
   id: string;
@@ -184,13 +157,13 @@ export const MapLibreView: React.FC<MapLibreViewProps> = ({
     ? [centerCoords.longitude, centerCoords.latitude]
     : markers.length > 0
       ? [markers[0].longitude, markers[0].latitude]
-      : DAKAR_CENTER;
+      : DAKAR_CENTER_LNG_LAT;
 
   return (
     <View style={[styles.container, style]}>
       <Map
         style={StyleSheet.absoluteFill}
-        mapStyle={OSM_STYLE}
+        mapStyle={OSM_RASTER_STYLE}
         onPress={handlePress}
         onLayout={(e) => {
           const { width, height } = e.nativeEvent.layout;

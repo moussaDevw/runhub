@@ -1,16 +1,17 @@
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+import { Screen, Spacer, VStack } from '@/components/layout';
+import { useTheme } from '@/hooks/use-theme';
 import { Colors, Spacing, Typography } from '@/constants/theme';
-import { ManageEventsCard } from '@/components/ui/manage-events-card';
+import { ManageEventsCard } from '@/features/events/components';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { ClubEventRow } from '@/components/ui/club-event-row';
+import { ClubEventRow } from '@/features/clubs/components';
 import { formatEventPresentation } from '@/features/events/utils/event.utils';
 import { useAgendaScreen } from '../hooks/useAgendaScreen';
 
 export function AgendaScreen() {
-  const insets = useSafeAreaInsets();
+  const theme = useTheme();
   
   const {
     t,
@@ -27,66 +28,66 @@ export function AgendaScreen() {
   } = useAgendaScreen();
 
   return (
-    <View style={[styles.container, { paddingTop: Math.max(insets.top, 20) }]}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={Colors.light.ink3} />
-        }
-      >
-        <Text style={styles.pageTitle}>{t('agenda.title')}</Text>
+    <Screen
+      safeTop
+      safeBottom={false}
+      scrollable
+      refreshing={isRefreshing}
+      onRefresh={onRefresh}
+      contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
+    >
+      <Text style={[styles.pageTitle, { color: theme.text }]}>{t('agenda.title')}</Text>
 
-        <ManageEventsCard count={myEventsCount} onPress={handleNavigateManageEvents} />
+      <ManageEventsCard count={myEventsCount} onPress={handleNavigateManageEvents} />
+      <Spacer size="space16" />
 
-        <SegmentedControl
-          options={[t('agenda.upcoming'), t('agenda.past')]}
-          selectedIndex={selectedTab}
-          onChange={setSelectedTab}
-        />
+      <SegmentedControl
+        options={[t('agenda.upcoming'), t('agenda.past')]}
+        selectedIndex={selectedTab}
+        onChange={setSelectedTab}
+      />
 
-        {agendaEvents.length > 0 ? (
-          <>
-            {groupedAgendaEvents.map((group, gIdx) => (
-              <View key={gIdx}>
-                <Text style={styles.sectionTitle}>
-                  {selectedTab === 0 ? t(group.titleKey) : group.titleKey}
-                </Text>
-                {group.events.map((registration) => {
-                  const presentation = formatEventPresentation(registration.event);
-                  return (
-                    <ClubEventRow
-                      key={registration.id}
-                      dateDay={presentation.dateDay}
-                      dateTime={presentation.dateTime}
-                      title={registration.event.title}
-                      location={presentation.location}
-                      imageSource={presentation.imageSource}
-                      onPress={() => handleNavigateEventDetail(registration.event.id)}
-                    />
-                  );
-                })}
-              </View>
-            ))}
-          </>
-        ) : (
-          <View style={styles.emptyState}>
-            <Ionicons name="calendar-outline" size={48} color={Colors.light.ink3} style={{ marginBottom: 16 }} />
-            <Text style={styles.emptyStateText}>
-              {selectedTab === 0 ? t('agenda.noUpcoming') : t('agenda.noPast')}
-            </Text>
-            <TouchableOpacity 
-              style={styles.exploreButton}
-              activeOpacity={0.8}
-              onPress={handleNavigateExplore}
-            >
-              <Text style={styles.exploreButtonText}>{t('agenda.exploreEvents')}</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-      </ScrollView>
-    </View>
+      {agendaEvents.length > 0 ? (
+        <VStack gap="space16" style={{ marginTop: Spacing.space16 }}>
+          {groupedAgendaEvents.map((group, gIdx) => (
+            <View key={gIdx}>
+              <Text style={styles.sectionTitle}>
+                {selectedTab === 0 ? t(group.titleKey) : group.titleKey}
+              </Text>
+              {group.events.map((registration) => {
+                const presentation = formatEventPresentation(registration.event);
+                return (
+                  <ClubEventRow
+                    key={registration.id}
+                    dateDay={presentation.dateDay}
+                    dateTime={presentation.dateTime}
+                    title={registration.event.title}
+                    location={presentation.location}
+                    imageSource={presentation.imageSource}
+                    onPress={() => handleNavigateEventDetail(registration.event.id)}
+                  />
+                );
+              })}
+            </View>
+          ))}
+        </VStack>
+      ) : (
+        <View style={styles.emptyState}>
+          <Ionicons name="calendar-outline" size={48} color={theme.ink3} style={{ marginBottom: 16 }} />
+          <Text style={[styles.emptyStateText, { color: theme.textSecondary }]}>
+            {selectedTab === 0 ? t('agenda.noUpcoming') : t('agenda.noPast')}
+          </Text>
+          <TouchableOpacity 
+            style={[styles.exploreButton, { backgroundColor: theme.cardBackground, borderColor: theme.line }]}
+            activeOpacity={0.8}
+            onPress={handleNavigateExplore}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.exploreButtonText, { color: theme.text }]}>{t('agenda.exploreEvents')}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </Screen>
   );
 }
 

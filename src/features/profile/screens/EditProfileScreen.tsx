@@ -1,15 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { Avatar } from '@/components/ui/avatar';
 import { FormInput } from '@/components/ui/form-input';
-import { Colors,  AccentColors, Spacing, Typography } from '@/constants/theme';
+import { Colors, AccentColors, Spacing, Typography } from '@/constants/theme';
+import { HStack, Screen } from '@/components/layout';
+import { useTheme } from '@/hooks/use-theme';
 import { useEditProfile } from '@/features/profile/hooks/useEditProfile';
 
 export function EditProfileScreen() {
-  const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+  const theme = useTheme();
   const {
     name,
     setName,
@@ -27,79 +30,92 @@ export function EditProfileScreen() {
     router,
   } = useEditProfile();
 
+  const header = (
+    <HStack align="center" justify="space-between" style={[styles.header, { backgroundColor: theme.backgroundElement, borderBottomColor: theme.line }]}>
+      <TouchableOpacity
+        onPress={() => router.back()}
+        style={styles.headerButton}
+        disabled={isSaving}
+        hitSlop={8}
+        accessibilityRole="button"
+      >
+        <Text style={[styles.cancelText, { color: theme.textSecondary }]}>{t('common.cancel')}</Text>
+      </TouchableOpacity>
+
+      <Text style={[styles.headerTitle, { color: theme.text }]}>{t('editProfile.title')}</Text>
+
+      <TouchableOpacity
+        onPress={handleSave}
+        style={[styles.headerButton, { alignItems: 'flex-end' }]}
+        disabled={isSaving}
+        hitSlop={8}
+        accessibilityRole="button"
+      >
+        {isSaving ? (
+          <ActivityIndicator size="small" color={AccentColors.bissap} />
+        ) : (
+          <Text style={styles.saveText}>{t('editProfile.save')}</Text>
+        )}
+      </TouchableOpacity>
+    </HStack>
+  );
+
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <Screen
+      safeTop
+      safeBottom
+      scrollable
+      keyboardAvoiding
+      header={header}
+      backgroundColor={theme.backgroundElement}
+      contentContainerStyle={styles.scrollContent}
     >
       <Stack.Screen options={{ headerShown: false, presentation: 'modal' }} />
 
-      {/* HEADER */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerButton} disabled={isSaving}>
-          <Text style={styles.cancelText}>Annuler</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.headerTitle}>Éditer le profil</Text>
-
-        <TouchableOpacity onPress={handleSave} style={styles.headerButton} disabled={isSaving}>
-          {isSaving ? (
-            <ActivityIndicator size="small" color={AccentColors.bissap} />
-          ) : (
-            <Text style={styles.saveText}>OK</Text>
-          )}
+      {/* AVATAR SECTION */}
+      <View style={styles.avatarSection}>
+        <View style={styles.avatarWrapper}>
+          <Avatar initials={initials} size={96} backgroundColor={AccentColors.bissap} />
+          <View style={styles.cameraBadge}>
+            <Ionicons name="camera" size={16} color="#ffffff" />
+          </View>
+        </View>
+        <TouchableOpacity style={styles.changePhotoButton} accessibilityRole="button">
+          <Text style={styles.changePhotoText}>{t('editProfile.changePhoto')}</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* AVATAR SECTION */}
-        <View style={styles.avatarSection}>
-          <View style={styles.avatarWrapper}>
-            <Avatar initials={initials} size={96} backgroundColor={AccentColors.bissap} />
-            <View style={styles.cameraBadge}>
-              <Ionicons name="camera" size={16} color="#ffffff" />
-            </View>
-          </View>
-          <TouchableOpacity style={styles.changePhotoButton}>
-            <Text style={styles.changePhotoText}>Changer la photo</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* FORM FIELDS */}
-        <FormInput
-          label="NOM COMPLET"
-          value={name}
-          onChangeText={setName}
-        />
-        <FormInput
-          label="NOM D'UTILISATEUR"
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="none"
-        />
-        <FormInput
-          label="VILLE / QUARTIER"
-          value={location}
-          onChangeText={setLocation}
-        />
-        <FormInput
-          label="BIO"
-          value={bio}
-          onChangeText={setBio}
-          multiline
-        />
-        <FormInput
-          label="ADRESSE E-MAIL"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-      </ScrollView>
-    </KeyboardAvoidingView>
+      {/* FORM FIELDS */}
+      <FormInput
+        label={t('editProfile.nameLabel')}
+        value={name}
+        onChangeText={setName}
+      />
+      <FormInput
+        label={t('editProfile.usernameLabel')}
+        value={username}
+        onChangeText={setUsername}
+        autoCapitalize="none"
+      />
+      <FormInput
+        label={t('editProfile.locationLabel')}
+        value={location}
+        onChangeText={setLocation}
+      />
+      <FormInput
+        label={t('editProfile.bioLabel')}
+        value={bio}
+        onChangeText={setBio}
+        multiline
+      />
+      <FormInput
+        label={t('editProfile.emailLabel')}
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+    </Screen>
   );
 }
 

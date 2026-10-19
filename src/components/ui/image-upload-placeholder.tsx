@@ -2,6 +2,7 @@ import { Colors, Spacing, Typography } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 interface ImageUploadPlaceholderProps {
   title?: string;
@@ -20,6 +21,7 @@ export function ImageUploadPlaceholder({
   isUploading,
   onRemove,
 }: ImageUploadPlaceholderProps) {
+  const { t } = useTranslation();
   return (
     <TouchableOpacity
       activeOpacity={0.8}
@@ -49,7 +51,7 @@ export function ImageUploadPlaceholder({
         // Spinner pendant l'upload
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color="#ffffff" />
-          <Text style={styles.uploadingText}>Upload en cours...</Text>
+          <Text style={styles.uploadingText}>{t('common.uploading')}</Text>
         </View>
       ) : imageUrl ? (
         // Bouton "Changer la photo" si une image est déjà uploadée
@@ -57,7 +59,7 @@ export function ImageUploadPlaceholder({
           <View style={styles.iconCircle}>
             <Ionicons name="camera-outline" size={24} color={Colors.light.text} />
           </View>
-          <Text style={styles.instructionText}>Changer la photo</Text>
+          <Text style={styles.instructionText}>{t('common.changePhoto')}</Text>
           {onRemove && (
             <TouchableOpacity
               style={styles.removeButton}
@@ -76,7 +78,7 @@ export function ImageUploadPlaceholder({
           <View style={styles.iconCircle}>
             <Ionicons name="camera-outline" size={24} color={Colors.light.text} />
           </View>
-          <Text style={styles.instructionText}>{title || 'Ajoute une belle photo'}</Text>
+          <Text style={styles.instructionText}>{title || t('common.addPhoto')}</Text>
         </View>
       )}
 

@@ -4,19 +4,19 @@ import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { MapLibreView } from '@/components/ui/map-libre-view';
+import { useTranslation } from 'react-i18next';
 
 import { AvatarGroup } from '@/components/ui/avatar';
-import { EventBottomBar } from '@/components/ui/event-bottom-bar';
 import { IconButton } from '@/components/ui/icon-button';
-import { InfoSquareCard } from '@/components/ui/info-square-card';
-import { OrganizerRow } from '@/components/ui/organizer-row';
-import { Colors,  BackgroundThemes, Spacing, Typography, AccentColors } from '@/constants/theme';
+import { EventBottomBar, InfoSquareCard, OrganizerRow, EventDetailSkeleton } from '@/features/events/components';
+import { Colors, BackgroundThemes, Spacing, Typography, AccentColors } from '@/constants/theme';
 import { formatPrice } from '@/core/utils/locale';
 import { useEventDetailScreen } from '../hooks/useEventDetailScreen';
 
 export function EventDetailScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t } = useTranslation();
   const {
     id,
     event,
@@ -42,13 +42,13 @@ export function EventDetailScreen() {
     handleCancelRegistration,
     handleOpenDirections,
     goBack,
-    t,
   } = useEventDetailScreen();
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={AccentColors.bissap} />
+      <View style={styles.container}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <EventDetailSkeleton />
       </View>
     );
   }
@@ -56,9 +56,9 @@ export function EventDetailScreen() {
   if (error || !event) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.errorText}>Impossible de charger l&apos;événement.</Text>
+        <Text style={styles.errorText}>{t('eventDetail.errorLoad')}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={goBack}>
-          <Text style={styles.retryBtnText}>Retour</Text>
+          <Text style={styles.retryBtnText}>{t('eventDetail.back')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -116,7 +116,7 @@ export function EventDetailScreen() {
               <Ionicons name="location" size={14} color="#e3e3e1" style={{ marginRight: 6 }} />
               <Text style={styles.locationText} numberOfLines={1}>{event.venueName || 'Dakar'}</Text>
             </View>
-            <Text style={styles.subtitle}>Organisé par {organizerFullName}</Text>
+            <Text style={styles.subtitle}>{t('eventDetail.organizedBy')} {organizerFullName}</Text>
           </View>
         </View>
 
@@ -124,22 +124,22 @@ export function EventDetailScreen() {
         <View style={styles.contentSection}>
           {/* Info Squares */}
           <View style={styles.infoRow}>
-            <InfoSquareCard 
-              label="QUAND" 
-              value={formattedDate} 
-              subValue={weekdaySubValue} 
+            <InfoSquareCard
+              label={t('eventDetail.whenLabel')}
+              value={formattedDate}
+              subValue={weekdaySubValue}
             />
             <View style={{ width: Spacing.space12 }} />
-            <InfoSquareCard 
-              label="PLACES" 
-              value={placesText} 
-              subValue={capacityLabel} 
+            <InfoSquareCard
+              label={t('eventDetail.placesLabel')}
+              value={placesText}
+              subValue={capacityLabel}
             />
             <View style={{ width: Spacing.space12 }} />
-            <InfoSquareCard 
-              label="PRIX" 
-              value={formatPrice(event.price)} 
-              subValue={event.price > 0 ? 'F CFA' : 'Entrée libre'} 
+            <InfoSquareCard
+              label={t('eventDetail.priceLabel')}
+              value={formatPrice(event.price)}
+              subValue={event.price > 0 ? 'F CFA' : t('eventDetail.freeEntry')}
             />
           </View>
 
@@ -147,23 +147,23 @@ export function EventDetailScreen() {
             name={organizerFullName}
             initials={organizerInitials}
             avatarColor={event.sport.color}
-            meta="Organisateur"
+            meta={t('eventDetail.organizer')}
           />
 
           <View style={styles.divider} />
 
           {/* Description */}
-          <Text style={styles.sectionHeading}>La séance</Text>
+          <Text style={styles.sectionHeading}>{t('eventDetail.sectionSession')}</Text>
           <Text style={styles.description}>
-            {event.description || "Aucune description fournie pour cet événement. Rejoignez le groupe de discussion pour en savoir plus auprès de l'organisateur !"}
+            {event.description || t('eventDetail.noDescription')}
           </Text>
 
           {/* Real Map Location Preview */}
           {event.coords && (
             <View style={styles.mapSection}>
-              <Text style={styles.sectionHeading}>Lieu de rendez-vous</Text>
+              <Text style={styles.sectionHeading}>{t('eventDetail.sectionLocation')}</Text>
               <Text style={styles.mapAddress}>{event.venueName}</Text>
-              
+
               <View style={styles.miniMapWrapper}>
                 <MapLibreView
                   style={StyleSheet.absoluteFill}
@@ -189,7 +189,7 @@ export function EventDetailScreen() {
                 onPress={handleOpenDirections}
               >
                 <Ionicons name="navigate-outline" size={18} color="#ffffff" style={{ marginRight: 6 }} />
-                <Text style={styles.directionBtnText}>Ouvrir l&apos;itinéraire</Text>
+                <Text style={styles.directionBtnText}>{t('eventDetail.openDirections')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -197,12 +197,12 @@ export function EventDetailScreen() {
           {/* Participants */}
           <View style={{ marginTop: Spacing.space32 }}>
             <Text style={[styles.sectionHeading, { marginBottom: Spacing.space16 }]}>
-              Qui vient • {registrationsCount}
+              {t('eventDetail.whosComing')} • {registrationsCount}
             </Text>
             {participantAvatars.length > 0 ? (
               <AvatarGroup users={participantAvatars} max={6} size={44} />
             ) : (
-              <Text style={styles.noParticipantsText}>Soyez le premier à rejoindre l&apos;événement !</Text>
+              <Text style={styles.noParticipantsText}>{t('eventDetail.noParticipants')}</Text>
             )}
           </View>
 
@@ -219,8 +219,8 @@ export function EventDetailScreen() {
                     <Ionicons name="qr-code" size={22} color="#ffffff" />
                   </View>
                   <View style={styles.registeredCardTexts}>
-                    <Text style={styles.registeredCardTitle}>Mon billet & QR Code</Text>
-                    <Text style={styles.registeredCardSubtitle}>Toucher pour afficher le code d&apos;accès</Text>
+                    <Text style={styles.registeredCardTitle}>{t('eventDetail.myTicket')}</Text>
+                    <Text style={styles.registeredCardSubtitle}>{t('eventDetail.scanInstruction')}</Text>
                   </View>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={AccentColors.vertTeranga} />
@@ -232,7 +232,7 @@ export function EventDetailScreen() {
                 onPress={handleCancelRegistration}
               >
                 <Ionicons name="close-circle-outline" size={16} color={Colors.light.ink3} style={{ marginRight: 6 }} />
-                <Text style={styles.cancelRegistrationText}>Annuler mon inscription</Text>
+                <Text style={styles.cancelRegistrationText}>{t('eventDetail.cancelRegistration')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -246,10 +246,10 @@ export function EventDetailScreen() {
           isOrganizer
             ? t('event.organizerLabel')
             : spotsLeft === 0
-              ? "COMPLET"
+              ? t('eventDetail.statusFull')
               : isRegistered
-                ? "INSCRIT"
-                : "PLACES DISPONIBLES"
+                ? t('eventDetail.statusRegistered')
+                : t('eventDetail.statusAvailable')
         }
         onParticipate={handleParticipate}
         onViewTicket={handleViewTicket}
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: Typography.corps.fontFamily,
     fontSize: 16,
-    color: '#65625e',
+    color: Colors.light.ink3,
     marginBottom: 16,
   },
   retryBtn: {
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
   description: {
     fontFamily: Typography.corps.fontFamily,
     fontSize: 16,
-    color: '#65625e',
+    color: Colors.light.ink3,
     lineHeight: 24,
   },
   mapSection: {
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
   mapAddress: {
     fontFamily: Typography.corps.fontFamily,
     fontSize: 14,
-    color: '#65625e',
+    color: Colors.light.ink3,
     marginBottom: 12,
   },
   miniMapWrapper: {

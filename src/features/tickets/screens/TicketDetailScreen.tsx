@@ -1,18 +1,22 @@
-import { Colors, AccentColors, Spacing, Typography } from '@/constants/theme';
+import { Colors, AccentColors, Radius, Shadows, Spacing, Typography, NeutralColors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import QRCode from 'react-native-qrcode-svg';
+import { useTranslation } from 'react-i18next';
 
+import { HStack, Screen, Spacer } from '@/components/layout';
+import { useTheme } from '@/hooks/use-theme';
 import { useEventDetail, useRegistrationStatus } from '@/features/events/hooks/useEvents';
 import { formatEventPresentation } from '@/features/events/utils/event.utils';
+import { TicketDetailSkeleton } from '../components/ticket-detail-skeleton';
 
 export function TicketDetailScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const theme = useTheme();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const eventId = id || '';
 
@@ -33,36 +37,47 @@ export function TicketDetailScreen() {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       await Share.share({
-        message: `Mon billet pour "${event?.title || 'l\'événement'}" sur RunHub.\nCode d'accès : ${rawTicketCode}`,
+        message: t('ticket.shareMessage', {
+          title: event?.title || 'l\'événement',
+          code: rawTicketCode,
+        }),
       });
     } catch (err) {
       console.log('Error sharing ticket:', err);
     }
   };
 
+  const header = (
+    <HStack align="center" justify="space-between" style={styles.header}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.back()}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.back', { defaultValue: 'Retour' })}
+      >
+        <Ionicons name="chevron-back" size={24} color={theme.text} />
+      </TouchableOpacity>
+      <Text style={[styles.headerTitle, { color: theme.text }]}>{t('ticket.title')}</Text>
+      <View style={{ width: 40 }} />
+    </HStack>
+  );
+
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <Screen
+      safeTop
+      safeBottom
+      scrollable
+      header={header}
+      contentContainerStyle={styles.scrollContent}
+      backgroundColor={theme.backgroundElement}
+    >
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* HEADER */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color={Colors.light.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Mon billet</Text>
-        <View style={{ width: 40 }} />
-      </View>
-
       {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={AccentColors.bissap} />
-          <Text style={styles.loadingText}>Chargement de votre billet...</Text>
-        </View>
+        <TicketDetailSkeleton />
       ) : (
-        <ScrollView
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 24) }]}
-          showsVerticalScrollIndicator={false}
-        >
+        <>
           {/* TICKET CARD */}
           <View style={styles.ticketWrapper}>
 
@@ -88,7 +103,7 @@ export function TicketDetailScreen() {
                     style={{ marginRight: 4 }}
                   />
                   <Text style={styles.statusPillText}>
-                    {isCheckedIn ? 'Validé à l\'entrée' : 'Billet confirmé'}
+                    {isCheckedIn ? t('ticket.statusCheckedIn') : t('ticket.statusValid')}
                   </Text>
                 </View>
               </View>
@@ -98,13 +113,13 @@ export function TicketDetailScreen() {
 
                 <View style={styles.infoRow}>
                   <View style={styles.infoCol}>
-                    <Text style={styles.infoLabel}>QUAND</Text>
+                    <Text style={styles.infoLabel}>{t('ticket.when')}</Text>
                     <Text style={styles.infoValue}>
                       {presentation ? `${presentation.dateDay} · ${presentation.dateTime}` : 'AUJ. · 18:30'}
                     </Text>
                   </View>
                   <View style={styles.infoCol}>
-                    <Text style={styles.infoLabel}>LIEU</Text>
+                    <Text style={styles.infoLabel}>{t('ticket.location')}</Text>
                     <Text style={styles.infoValue}>{event?.venueName || event?.city || 'Dakar'}</Text>
                   </View>
                 </View>
@@ -120,7 +135,7 @@ export function TicketDetailScreen() {
 
             {/* Bottom Half */}
             <View style={styles.ticketBottom}>
-              <Text style={styles.scanInstructionTitle}>Présente ce QR Code à l&apos;arrivée</Text>
+              <Text style={styles.scanInstructionTitle}>{t('ticket.scanInstruction')}</Text>
               
               <View style={styles.qrCodeWrapper}>
                 <QRCode
@@ -132,37 +147,37 @@ export function TicketDetailScreen() {
               </View>
 
               <View style={styles.manualCodeBox}>
-                <Text style={styles.manualCodeLabel}>CODE D&apos;ACCÈS MANUEL</Text>
+                <Text style={styles.manualCodeLabel}>{t('ticket.manualCodeLabel')}</Text>
                 <Text style={styles.ticketCode}>{formattedTicketCode}</Text>
               </View>
 
               <Text style={styles.footerText}>
-                À présenter à l&apos;organisateur pour le scan caméra ou pour la saisie manuelle.
+                {t('ticket.footerNotice')}
               </Text>
             </View>
 
           </View>
 
           {/* BOTTOM ACTIONS */}
-          <View style={styles.actionsRow}>
+          <HStack align="center" justify="space-between" style={styles.actionsRow}>
             <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.8} onPress={handleShare}>
-              <Ionicons name="share-social-outline" size={18} color={Colors.light.text} style={{ marginRight: 6 }} />
-              <Text style={styles.secondaryButtonText}>Partager</Text>
+              <Ionicons name="share-social-outline" size={18} color={theme.text} style={{ marginRight: 6 }} />
+              <Text style={styles.secondaryButtonText}>{t('ticket.share')}</Text>
             </TouchableOpacity>
-            <View style={{ width: Spacing.space16 }} />
+            <Spacer size="space16" horizontal />
             <TouchableOpacity 
               style={styles.primaryButton}
               activeOpacity={0.8}
               onPress={() => router.push('/(tabs)/agenda')}
             >
               <Ionicons name="calendar-outline" size={18} color="#ffffff" style={{ marginRight: 6 }} />
-              <Text style={styles.primaryButtonText}>Mon agenda</Text>
+              <Text style={styles.primaryButtonText}>{t('ticket.myAgenda')}</Text>
             </TouchableOpacity>
-          </View>
-
-        </ScrollView>
+          </HStack>
+          <Spacer size="space24" />
+        </>
       )}
-    </View>
+    </Screen>
   );
 }
 
@@ -181,8 +196,8 @@ const styles = StyleSheet.create({
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: '#ffffff',
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.light.cardBackground,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -196,15 +211,11 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.space20,
   },
   ticketWrapper: {
-    backgroundColor: '#ffffff',
-    borderRadius: 24,
+    backgroundColor: Colors.light.cardBackground,
+    borderRadius: Radius.lg,
     marginBottom: Spacing.space24,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
+    ...Shadows.card,
   },
   ticketTop: {
   },
@@ -223,22 +234,22 @@ const styles = StyleSheet.create({
     left: Spacing.space16,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(29, 22, 28, 0.4)',
+    backgroundColor: NeutralColors.overlay40,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 99,
+    borderRadius: Radius.pill,
   },
   sportDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#f2784f',
+    backgroundColor: AccentColors.corailSunset,
     marginRight: 6,
   },
   sportLabel: {
     fontFamily: Typography.corpsGras.fontFamily,
     fontSize: 10,
-    color: '#ffffff',
+    color: NeutralColors.white,
     letterSpacing: 1.5,
   },
   ticketDetails: {
@@ -332,32 +343,16 @@ const styles = StyleSheet.create({
   secondaryButton: {
     flex: 1,
     height: 48,
-    borderRadius: 12,
-    backgroundColor: '#ffffff',
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.light.cardBackground,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 1,
+    ...Shadows.sm,
   },
   secondaryButtonText: {
     fontFamily: Typography.corpsGras.fontFamily,
     fontSize: 15,
     color: Colors.light.text,
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Spacing.space32,
-  },
-  loadingText: {
-    fontFamily: Typography.corps.fontFamily,
-    fontSize: 15,
-    color: Colors.light.ink3,
-    marginTop: Spacing.space16,
   },
   statusPill: {
     position: 'absolute',
@@ -367,7 +362,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 99,
+    borderRadius: Radius.pill,
   },
   statusValid: {
     backgroundColor: 'rgba(47, 107, 77, 0.9)',
@@ -378,7 +373,7 @@ const styles = StyleSheet.create({
   statusPillText: {
     fontFamily: Typography.corpsGras.fontFamily,
     fontSize: 11,
-    color: '#ffffff',
+    color: NeutralColors.white,
   },
   scanInstructionTitle: {
     fontFamily: Typography.titre.fontFamily,
@@ -389,7 +384,7 @@ const styles = StyleSheet.create({
   },
   manualCodeBox: {
     backgroundColor: Colors.light.backgroundElement,
-    borderRadius: 16,
+    borderRadius: Radius.md,
     paddingVertical: 12,
     paddingHorizontal: 20,
     alignItems: 'center',
@@ -407,7 +402,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     flex: 1,
     height: 48,
-    borderRadius: 12,
+    borderRadius: Radius.sm,
     backgroundColor: AccentColors.bissap,
     alignItems: 'center',
     justifyContent: 'center',
@@ -416,6 +411,6 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     fontFamily: Typography.corpsGras.fontFamily,
     fontSize: 15,
-    color: '#ffffff',
+    color: NeutralColors.white,
   },
 });

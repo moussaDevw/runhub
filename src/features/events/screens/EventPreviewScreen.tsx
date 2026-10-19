@@ -1,18 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
-import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
-import { EventPreviewCard } from '@/components/ui/event-preview-card';
+import { HStack, Screen } from '@/components/layout';
+import { EventPreviewCard } from '@/features/events/components';
 import { FeatureCheckItem } from '@/components/ui/feature-check-item';
-import { Colors,  AccentColors, Spacing, Typography } from '@/constants/theme';
+import { Colors, AccentColors, Spacing, Typography } from '@/constants/theme';
 import { formatTime, getDayLabel, formatPrice } from '@/core/utils/locale';
+import { useTheme } from '@/hooks/use-theme';
 import { useEventPreview } from '../hooks/useEventPreview';
 
 export function EventPreviewScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const theme = useTheme();
   const {
     title,
     price,
@@ -28,60 +30,68 @@ export function EventPreviewScreen() {
     goBack,
   } = useEventPreview();
 
+  const header = (
+    <HStack align="center" justify="space-between" style={[styles.header, { backgroundColor: theme.background, borderBottomColor: theme.line }]}>
+      <TouchableOpacity
+        style={[styles.iconButton, { borderColor: theme.line, backgroundColor: theme.cardBackground }]}
+        onPress={goBack}
+        disabled={isPublishing}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.back', { defaultValue: 'Retour' })}
+      >
+        <Ionicons name="chevron-back" size={20} color={theme.text} />
+      </TouchableOpacity>
+
+      <Text style={[styles.headerTitle, { color: theme.text }]}>{t('creation.previewTitle')}</Text>
+
+      <Text style={[styles.stepText, { color: theme.ink3 }]}>2/2</Text>
+    </HStack>
+  );
+
   return (
-    <View style={styles.container}>
-      <StatusBar style="dark" />
+    <Screen
+      scrollable
+      safeTop
+      safeBottom={false}
+      header={header}
+      contentContainerStyle={[styles.scrollContent, { paddingBottom: 140 }]}
+      style={{ backgroundColor: theme.backgroundElement }}
+    >
+      <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+        {t('creation.previewSubtitle')}
+      </Text>
 
-      {/* HEADER */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
-        <TouchableOpacity style={styles.iconButton} onPress={goBack} disabled={isPublishing}>
-          <Ionicons name="chevron-back" size={20} color={Colors.light.text} />
-        </TouchableOpacity>
+      <EventPreviewCard
+        title={title}
+        price={formatPrice(price)}
+        time={formatTime(startsAt)}
+        location={venueName}
+        organizerInitials={organizerInitials}
+        organizerName={organizerName}
+        places={capacity ? `${capacity}` : t('creation.capacityUnlimited')}
+        sportLabel={selectedSport?.labelFr || 'Sport'}
+        sportColor={selectedSport?.color || theme.text}
+        dateLabel={getDayLabel(startsAt)}
+        timeLabel={formatTime(startsAt)}
+        coverUrl={coverUrl || undefined}
+      />
 
-        <Text style={styles.headerTitle}>{t('creation.previewTitle')}</Text>
-
-        <Text style={styles.stepText}>2/2</Text>
+      <View style={styles.featuresList}>
+        <FeatureCheckItem label={t('creation.previewFeature1')} />
+        <FeatureCheckItem label={price > 0 ? t('creation.previewFeature2Paid', { price: formatPrice(price) }) : t('creation.previewFeature2Free')} />
+        <FeatureCheckItem label={t('creation.previewFeature3')} />
       </View>
 
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.subtitle}>
-          {t('creation.previewSubtitle')}
-        </Text>
-
-        <EventPreviewCard
-          title={title}
-          price={formatPrice(price)}
-          time={formatTime(startsAt)}
-          location={venueName}
-          organizerInitials={organizerInitials}
-          organizerName={organizerName}
-          places={capacity ? `${capacity}` : t('creation.capacityUnlimited')}
-          sportLabel={selectedSport?.labelFr || 'Sport'}
-          sportColor={selectedSport?.color || Colors.light.text}
-          dateLabel={getDayLabel(startsAt)}
-          timeLabel={formatTime(startsAt)}
-          coverUrl={coverUrl || undefined}
-        />
-
-        <View style={styles.featuresList}>
-          <FeatureCheckItem label={t('creation.previewFeature1')} />
-          <FeatureCheckItem label={price > 0 ? t('creation.previewFeature2Paid', { price: formatPrice(price) }) : t('creation.previewFeature2Free')} />
-          <FeatureCheckItem label={t('creation.previewFeature3')} />
-        </View>
-      </ScrollView>
-
       {/* BOTTOM ACTIONS */}
-      <View style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+      <View style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, 24), backgroundColor: theme.backgroundElement }]}>
         <TouchableOpacity
-          style={styles.secondaryButton}
+          style={[styles.secondaryButton, { backgroundColor: theme.cardBackground, borderColor: theme.line }]}
           activeOpacity={0.8}
           onPress={goBack}
           disabled={isPublishing}
         >
-          <Text style={styles.secondaryButtonText}>{t('creation.previewButtonModify')}</Text>
+          <Text style={[styles.secondaryButtonText, { color: theme.text }]}>{t('creation.previewButtonModify')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -97,42 +107,31 @@ export function EventPreviewScreen() {
           )}
         </TouchableOpacity>
       </View>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.backgroundElement,
-  },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: Spacing.space16,
-    paddingBottom: Spacing.space16,
-    backgroundColor: '#ffffff',
+    paddingVertical: Spacing.space12,
+    borderBottomWidth: 1,
   },
   iconButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#e3e3e1',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ffffff',
   },
   headerTitle: {
     fontFamily: Typography.titre.fontFamily,
     fontSize: 18,
-    color: Colors.light.text,
   },
   stepText: {
     fontFamily: Typography.meta.fontFamily,
     fontSize: 12,
-    color: Colors.light.ink3,
   },
   scrollContent: {
     padding: Spacing.space20,
@@ -140,12 +139,12 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: Typography.corps.fontFamily,
     fontSize: 14,
-    color: '#65625e',
     textAlign: 'center',
     marginBottom: Spacing.space20,
   },
   featuresList: {
     paddingHorizontal: Spacing.space8,
+    marginTop: Spacing.space8,
   },
   bottomContainer: {
     position: 'absolute',
@@ -156,22 +155,18 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.space16,
     flexDirection: 'row',
     gap: Spacing.space12,
-    backgroundColor: Colors.light.backgroundElement,
   },
   secondaryButton: {
     flex: 1,
-    backgroundColor: '#ffffff',
     borderRadius: 16,
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#e3e3e1',
   },
   secondaryButtonText: {
     fontFamily: Typography.corpsGras.fontFamily,
     fontSize: 16,
-    color: Colors.light.text,
   },
   primaryButton: {
     flex: 1.5,
@@ -188,7 +183,6 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.7,
-    backgroundColor: Colors.light.ink3,
     shadowOpacity: 0,
     elevation: 0,
   },

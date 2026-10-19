@@ -1,43 +1,65 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
-import { ManagedEventCard } from '@/components/ui/managed-event-card';
+import { ManagedEventCard, ManagedEventCardSkeleton } from '@/features/events/components';
 import { AccentColors, Colors, Spacing, Typography } from '@/constants/theme';
+import { HStack, Screen } from '@/components/layout';
+import { useTheme } from '@/hooks/use-theme';
 import { useMyEvents } from '../hooks/useEvents';
 import { formatEventPresentation } from '../utils/event.utils';
 
 export function ManageEventsScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { data: myEvents = [] } = useMyEvents();
+  const theme = useTheme();
+  const { data: myEvents = [], isLoading } = useMyEvents();
+
+  const header = (
+    <HStack align="center" justify="space-between" style={styles.header}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.back()}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.back', { defaultValue: 'Retour' })}
+      >
+        <Ionicons name="chevron-back" size={24} color={theme.text} />
+      </TouchableOpacity>
+
+      <Text style={[styles.headerTitle, { color: theme.text }]}>{t('manageEvents.title')}</Text>
+
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => router.push('/event/create' as any)}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.add', { defaultValue: 'Ajouter' })}
+      >
+        <Ionicons name="add" size={24} color="#ffffff" />
+      </TouchableOpacity>
+    </HStack>
+  );
 
   return (
-    <View style={styles.container}>
+    <Screen
+      safeTop
+      safeBottom
+      scrollable
+      header={header}
+      backgroundColor={theme.backgroundElement}
+      contentContainerStyle={styles.scrollContent}
+    >
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* HEADER */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color={Colors.light.text} />
-        </TouchableOpacity>
-
-        <Text style={styles.headerTitle}>Mes events créés</Text>
-
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => router.push('/event/create' as any)}
-        >
-          <Ionicons name="add" size={24} color="#ffffff" />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {myEvents.map((event) => {
+      {isLoading ? (
+        <>
+          <ManagedEventCardSkeleton />
+          <ManagedEventCardSkeleton />
+        </>
+      ) : (
+        myEvents.map((event) => {
           const presentation = formatEventPresentation(event);
           return (
             <ManagedEventCard
@@ -48,9 +70,9 @@ export function ManageEventsScreen() {
               onCheckInPress={() => router.push(`/check-in/${event.id}` as any)}
             />
           );
-        })}
-      </ScrollView>
-    </View>
+        })
+      )}
+    </Screen>
   );
 }
 

@@ -1,103 +1,112 @@
 import { IconButton } from '@/components/ui/icon-button';
 import { BackgroundThemes, Colors, Spacing, Typography, AccentColors } from '@/constants/theme';
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { FormInput } from '@/components/ui/form-input';
 import { ImageUploadPlaceholder } from '@/components/ui/image-upload-placeholder';
 import { LocationPickerModal } from '@/features/creation/components/LocationPickerModal';
+import { HStack, Screen, Spacer } from '@/components/layout';
+import { useTheme } from '@/hooks/use-theme';
 import { useCreateClubForm } from '../hooks/useCreateClubForm';
+import { useTranslation } from 'react-i18next';
 
 export function CreateClubScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const theme = useTheme();
   const { state, actions, status } = useCreateClubForm();
 
+  const header = (
+    <HStack align="center" justify="space-between" style={[styles.header, { backgroundColor: theme.background, borderBottomColor: theme.line }]}>
+      <IconButton iconName="close" onPress={() => router.back()} />
+      <Text style={[styles.headerTitle, { color: theme.text }]}>{t('createClub.headerTitle')}</Text>
+      <View style={{ width: 40 }} />
+    </HStack>
+  );
+
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top }]}>
-        <IconButton iconName="close" onPress={() => router.back()} />
-        <Text style={styles.headerTitle}>Créer un club</Text>
-        <View style={{ width: 40 }} />
-      </View>
+    <Screen
+      safeTop
+      safeBottom
+      scrollable
+      keyboardAvoiding
+      header={header}
+      contentContainerStyle={styles.content}
+    >
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('createClub.appearance')}</Text>
+      <ImageUploadPlaceholder
+        title={t('createClub.coverPhoto')}
+        imageUrl={state.coverUrl}
+        onPress={actions.handleSelectCover}
+        isUploading={status.isUploading && !state.coverUrl}
+      />
+      <Spacer size="space16" />
+      <ImageUploadPlaceholder
+        title={t('createClub.logo')}
+        imageUrl={state.logoUrl}
+        onPress={actions.handleSelectLogo}
+        isUploading={status.isUploading && !state.logoUrl}
+      />
 
-      <ScrollView 
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.space24 }]}
-        showsVerticalScrollIndicator={false}
+      <Spacer size="space32" />
+
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('createClub.basicInfo')}</Text>
+      
+      <FormInput
+        label={t('createClub.nameLabel')}
+        value={state.name}
+        onChangeText={actions.setName}
+        placeholder={t('createClub.namePlaceholder')}
+      />
+      
+      <FormInput
+        label={t('createClub.handleLabel')}
+        value={state.handle}
+        onChangeText={actions.setHandle}
+        placeholder={t('createClub.handlePlaceholder')}
+        autoCapitalize="none"
+      />
+
+      <FormInput
+        label={t('createClub.descLabel')}
+        value={state.bio}
+        onChangeText={actions.setBio}
+        placeholder={t('createClub.descPlaceholder')}
+        multiline
+      />
+
+      <Spacer size="space32" />
+      
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('createClub.locationTitle')}</Text>
+      <TouchableOpacity 
+        style={[styles.locationSelector, { backgroundColor: theme.backgroundElement }]}
+        onPress={() => actions.setIsLocationModalVisible(true)}
+        accessibilityRole="button"
       >
-        <Text style={styles.sectionTitle}>Apparence</Text>
-        <ImageUploadPlaceholder
-          title="Photo de couverture (16:9)"
-          imageUrl={state.coverUrl}
-          onPress={actions.handleSelectCover}
-          isUploading={status.isUploading && !state.coverUrl}
-        />
-        <View style={styles.spacer} />
-        <ImageUploadPlaceholder
-          title="Logo du club (1:1)"
-          imageUrl={state.logoUrl}
-          onPress={actions.handleSelectLogo}
-          isUploading={status.isUploading && !state.logoUrl}
-        />
+        <Text style={state.baseName ? [styles.locationText, { color: theme.text }] : [styles.locationPlaceholder, { color: theme.ink3 }]}>
+          {state.baseName || t('createClub.locationPlaceholder')}
+        </Text>
+      </TouchableOpacity>
 
-        <View style={styles.spacerLarge} />
-
-        <Text style={styles.sectionTitle}>Informations de base</Text>
-        
-        <FormInput
-          label="Nom du club *"
-          value={state.name}
-          onChangeText={actions.setName}
-          placeholder="ex: Dakar Runners"
-        />
-        
-        <FormInput
-          label="Identifiant unique *"
-          value={state.handle}
-          onChangeText={actions.setHandle}
-          placeholder="ex: dakar_runners"
-          autoCapitalize="none"
-        />
-
-        <FormInput
-          label="Description"
-          value={state.bio}
-          onChangeText={actions.setBio}
-          placeholder="Décrivez votre club..."
-          multiline
-        />
-
-        <View style={styles.spacerLarge} />
-        
-        <Text style={styles.sectionTitle}>Localisation</Text>
-        <TouchableOpacity 
-          style={styles.locationSelector}
-          onPress={() => actions.setIsLocationModalVisible(true)}
-        >
-          <Text style={state.baseName ? styles.locationText : styles.locationPlaceholder}>
-            {state.baseName || 'Sélectionner la base du club...'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.submitButton, status.isPending && styles.submitButtonDisabled]}
-          onPress={actions.handleSubmit}
-          disabled={status.isPending || status.isUploading}
-        >
-          {status.isPending ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text style={styles.submitButtonText}>Créer mon club</Text>
-          )}
-        </TouchableOpacity>
-      </ScrollView>
+      <TouchableOpacity 
+        style={[styles.submitButton, status.isPending && styles.submitButtonDisabled]}
+        onPress={actions.handleSubmit}
+        disabled={status.isPending || status.isUploading}
+        accessibilityRole="button"
+      >
+        {status.isPending ? (
+          <ActivityIndicator color="white" />
+        ) : (
+          <Text style={styles.submitButtonText}>{t('createClub.submitButton')}</Text>
+        )}
+      </TouchableOpacity>
 
       <LocationPickerModal
         isVisible={state.isLocationModalVisible}
         onDismiss={() => actions.setIsLocationModalVisible(false)}
         onSelectLocation={actions.handleLocationSelect}
       />
-    </View>
+    </Screen>
   );
 }
 

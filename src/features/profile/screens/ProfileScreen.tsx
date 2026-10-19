@@ -1,17 +1,22 @@
-import { ProfileHeaderCard } from '@/components/ui/profile-header-card';
-import { SettingsRow } from '@/components/ui/settings-row';
-import { SPORT_ICONS } from '@/components/ui/sport-card';
+import { useState } from 'react';
+import { ProfileHeaderCard, SettingsRow } from '@/features/profile/components';
+import { SPORT_ICONS } from '@/features/sports/components';
 import { Colors, Spacing, Typography, AccentColors } from '@/constants/theme';
 import { useProfile } from '@/features/profile/hooks/useProfile';
 import { useMyClubs } from '@/features/clubs/hooks/useMyClubs';
+import { FitnessStatsCard, HealthConnectModal, useHealthData } from '@/features/health';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Image } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { HStack, Screen, Spacer } from '@/components/layout';
+import { useTheme } from '@/hooks/use-theme';
+
 export function ProfileScreen() {
-  const insets = useSafeAreaInsets();
   const { t, i18n } = useTranslation();
+  const theme = useTheme();
+  const [showHealthModal, setShowHealthModal] = useState(false);
+  const { provider, data: healthData } = useHealthData();
   const {
     user,
     fullName,
@@ -33,27 +38,33 @@ export function ProfileScreen() {
   const { data: myClubs, isLoading: isLoadingClubs } = useMyClubs();
 
   return (
-    <View style={[styles.container, { paddingTop: Math.max(insets.top, 20) }]}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
-      >
-        <ProfileHeaderCard
-          name={fullName}
-          username={displayUsername}
-          email={displayEmail}
-          initials={initials}
-          avatarColor="#b8324f"
-          onPress={() => router.push('/edit-profile' as any)}
-        />
+    <Screen
+      safeTop
+      safeBottom={false}
+      scrollable
+      contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
+    >
+      <ProfileHeaderCard
+        name={fullName}
+        username={displayUsername}
+        email={displayEmail}
+        initials={initials}
+        avatarColor={AccentColors.bissap}
+        onPress={() => router.push('/edit-profile' as any)}
+      />
 
-        {/* MES SPORTS */}
-        <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionHeader}>{t('profile.mySports')}</Text>
-          <TouchableOpacity onPress={() => router.push('/sports' as any)}>
-            <Text style={styles.editSportsText}>{t('profile.modify')}</Text>
-          </TouchableOpacity>
-        </View>
+      <Spacer size={Spacing.space16} />
+
+      {/* FITNESS & HEALTH STATS */}
+      <FitnessStatsCard onPressConnect={() => setShowHealthModal(true)} />
+
+      {/* MES SPORTS */}
+      <HStack align="center" justify="space-between" style={styles.sectionHeaderRow}>
+        <Text style={[styles.sectionHeader, { color: theme.ink3 }]}>{t('profile.mySports')}</Text>
+        <TouchableOpacity onPress={() => router.push('/sports' as any)} hitSlop={8} accessibilityRole="button">
+          <Text style={styles.editSportsText}>{t('profile.modify')}</Text>
+        </TouchableOpacity>
+      </HStack>
         <View style={styles.sportsContainer}>
           {user?.sports && user.sports.length > 0 ? (
             <ScrollView
@@ -102,12 +113,12 @@ export function ProfileScreen() {
         </View>
 
         {/* MES CLUBS */}
-        <View style={[styles.sectionHeaderRow, { marginTop: Spacing.space24 }]}>
-          <Text style={styles.sectionHeader}>Mes Clubs</Text>
-          <TouchableOpacity onPress={() => router.push('/club/create' as any)}>
-            <Text style={styles.editSportsText}>Créer</Text>
+        <HStack align="center" justify="space-between" style={[styles.sectionHeaderRow, { marginTop: Spacing.space24 }]}>
+          <Text style={[styles.sectionHeader, { color: theme.ink3 }]}>{t('profile.myClubs')}</Text>
+          <TouchableOpacity onPress={() => router.push('/club/create' as any)} hitSlop={8} accessibilityRole="button">
+            <Text style={styles.editSportsText}>{t('profile.create')}</Text>
           </TouchableOpacity>
-        </View>
+        </HStack>
         <View style={styles.sportsContainer}>
           {isLoadingClubs ? (
             <ActivityIndicator size="small" color={AccentColors.bissap} style={{ padding: 20 }} />
@@ -132,22 +143,24 @@ export function ProfileScreen() {
                     </View>
                   )}
                   <Text style={styles.clubName} numberOfLines={1}>{club.name}</Text>
-                  <Text style={styles.clubRole}>{club.role === 'OWNER' ? 'Propriétaire' : club.role === 'ADMIN' ? 'Admin' : 'Membre'}</Text>
+                  <Text style={styles.clubRole}>
+                    {club.role === 'OWNER' ? t('profile.owner') : club.role === 'ADMIN' ? t('profile.admin') : t('profile.member')}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
           ) : (
             <View style={styles.emptySportsContainer}>
               <Ionicons name="people-outline" size={32} color={Colors.light.ink3} style={{ marginBottom: 8 }} />
-              <Text style={styles.noSportsText}>Aucun club rejoint</Text>
-              <Text style={styles.noSportsSubtitle}>Trouvez un club ou créez le vôtre !</Text>
+              <Text style={styles.noSportsText}>{t('profile.noClubsJoined')}</Text>
+              <Text style={styles.noSportsSubtitle}>{t('profile.noClubsSubtitle')}</Text>
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => router.push('/club/create' as any)}
                 style={styles.addSportsButtonInline}
               >
                 <Ionicons name="add" size={16} color="#ffffff" style={{ marginRight: 4 }} />
-                <Text style={styles.addSportsButtonLabelInline}>Créer un club</Text>
+                <Text style={styles.addSportsButtonLabelInline}>{t('profile.createClub')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -178,6 +191,12 @@ export function ProfileScreen() {
           type="toggle"
           value={ecoModeEnabled}
           onValueChange={setEcoModeEnabled}
+        />
+        <SettingsRow
+          iconName="heart-circle-outline"
+          title={provider === 'apple_health' ? 'Apple Santé' : 'Google Santé Connect'}
+          subtitle={healthData?.isConnected ? 'Synchronisé' : 'Non connecté'}
+          onPress={() => setShowHealthModal(true)}
         />
         <SettingsRow
           iconName="globe-outline"
@@ -229,8 +248,11 @@ export function ProfileScreen() {
           onPress={handleLogout}
         />
 
-      </ScrollView>
-    </View>
+        <HealthConnectModal
+          visible={showHealthModal}
+          onClose={() => setShowHealthModal(false)}
+        />
+    </Screen>
   );
 }
 

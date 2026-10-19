@@ -1,4 +1,4 @@
-import { EventStatus } from '@/components/ui/managed-event-card';
+import { EventStatus } from '../components';
 import { EventItemResponse } from '../api/events.api';
 
 export function getEventStatus(startsAt: string): EventStatus {

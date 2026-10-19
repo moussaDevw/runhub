@@ -1,11 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FormInput } from '@/components/ui/form-input';
 import { ImageUploadPlaceholder } from '@/components/ui/image-upload-placeholder';
 import { AccentColors, Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { HStack, Screen } from '@/components/layout';
+import { useTheme } from '@/hooks/use-theme';
 import { LocationPickerModal } from '../components/LocationPickerModal';
 import { SportPickerModal } from '../components/SportPickerModal';
 import { DateTimeSection } from '../components/DateTimeSection';
@@ -14,6 +16,7 @@ import { useCreationScreen } from '../hooks/useCreationScreen';
 
 export function CreationScreen() {
   const insets = useSafeAreaInsets();
+  const theme = useTheme();
   const {
     editingEventId,
     clubId,
@@ -51,35 +54,37 @@ export function CreationScreen() {
     t,
   } = useCreationScreen();
 
+  const header = (
+    <HStack align="center" justify="space-between" style={[styles.header, { backgroundColor: theme.background }]}>
+      <TouchableOpacity style={styles.iconButton} onPress={goBack} hitSlop={8} accessibilityRole="button">
+        <Ionicons name="close" size={20} color={theme.text} />
+      </TouchableOpacity>
+
+      <Text style={[styles.headerTitle, { color: theme.text }]}>
+        {editingEventId ? t('creation.headerTitleEdit') : t('creation.headerTitle')}
+      </Text>
+
+      <Text style={styles.stepText}>1/2</Text>
+    </HStack>
+  );
+
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <Screen
+      safeTop
+      safeBottom={false}
+      scrollable={!isLoadingData}
+      keyboardAvoiding
+      header={header}
+      contentContainerStyle={[styles.scrollContent, { paddingBottom: 140 }]}
     >
       <StatusBar style="dark" />
-
-      {/* HEADER */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
-        <TouchableOpacity style={styles.iconButton} onPress={goBack}>
-          <Ionicons name="close" size={20} color={Colors.light.text} />
-        </TouchableOpacity>
-
-        <Text style={styles.headerTitle}>
-          {editingEventId ? t('creation.headerTitleEdit') : t('creation.headerTitle')}
-        </Text>
-
-        <Text style={styles.stepText}>1/2</Text>
-      </View>
 
       {isLoadingData ? (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color={AccentColors.bissap} />
         </View>
       ) : (
-        <ScrollView
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: 140 }]}
-          showsVerticalScrollIndicator={false}
-        >
+        <>
           {/* ORGANIZER SELECTOR (Personal vs Club) */}
           {myAdminClubs.length > 0 && (
             <View style={styles.organizerSection}>
@@ -224,7 +229,7 @@ export function CreationScreen() {
             onChangePrice={(val) => updateField('price', val)}
             onChangeCapacity={(val) => updateField('capacity', val)}
           />
-        </ScrollView>
+        </>
       )}
 
       {/* BOTTOM BUTTON */}
@@ -234,6 +239,7 @@ export function CreationScreen() {
           activeOpacity={0.8}
           disabled={!isFormValid || isSaving}
           onPress={editingEventId ? handleSave : goToPreview}
+          accessibilityRole="button"
         >
           {isSaving ? (
             <ActivityIndicator size="small" color="#ffffff" />
@@ -262,8 +268,7 @@ export function CreationScreen() {
         onSelectSport={handleSelectSport}
       />
 
-
-    </KeyboardAvoidingView>
+    </Screen>
   );
 }
 

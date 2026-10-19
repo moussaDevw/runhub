@@ -6,17 +6,21 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "runhub",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "ios": {
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.musadiagnesorganization.runhub",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "RunHub a besoin d'accéder à votre caméra pour scanner les billets et QR codes des participants."
+        "NSCameraUsageDescription": "RunHub a besoin d'accéder à votre caméra pour scanner les billets et QR codes des participants.",
+        "NSHealthShareUsageDescription": "RunHub utilise vos données Apple Santé pour synchroniser automatiquement vos kilomètres courus, vos pas et vos entraînements.",
+        "NSHealthUpdateUsageDescription": "RunHub peut enregistrer vos sessions de course dans Apple Santé."
       }
     },
     "android": {
       "package": "com.musadiagnesorganization.runhub",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -25,7 +29,12 @@
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "android.permission.CAMERA"
+        "android.permission.CAMERA",
+        "android.permission.ACTIVITY_RECOGNITION",
+        "android.permission.health.READ_DISTANCE",
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_EXERCISE",
+        "android.permission.health.READ_TOTAL_CALORIES_BURNED"
       ]
     },
     "web": {
@@ -53,7 +62,8 @@
       "expo-image",
       "expo-secure-store",
       "@maplibre/maplibre-react-native",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "react-native-nitro-google-signin"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { AccentColors, Spacing, Typography } from '@/constants/theme';
 
@@ -23,6 +24,8 @@ export function ScannerPermissionView({
   onBack,
   insetsTop = 0,
 }: ScannerPermissionViewProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.container}>
       {/* HEADER */}
@@ -30,7 +33,7 @@ export function ScannerPermissionView({
         <TouchableOpacity style={styles.iconButton} onPress={onBack}>
           <Ionicons name="close" size={24} color="#ffffff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Scanner les billets</Text>
+        <Text style={styles.headerTitle}>{t('checkIn.scanTickets')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -40,9 +43,9 @@ export function ScannerPermissionView({
           <Ionicons name="camera-outline" size={48} color={AccentColors.bissap} />
         </View>
 
-        <Text style={styles.permissionTitle}>Autorisation caméra requise</Text>
+        <Text style={styles.permissionTitle}>{t('checkIn.permissionTitle')}</Text>
         <Text style={styles.permissionDescription}>
-          RunHub a besoin d&apos;accéder à votre caméra pour scanner les QR codes des participants à l&apos;arrivée.
+          {t('checkIn.permissionDescription')}
         </Text>
 
         <TouchableOpacity
@@ -52,7 +55,7 @@ export function ScannerPermissionView({
         >
           <Ionicons name="camera" size={20} color="#ffffff" style={{ marginRight: 8 }} />
           <Text style={styles.permissionPrimaryButtonText}>
-            {!canAskAgain ? 'Ouvrir les réglages' : 'Autoriser la caméra'}
+            {!canAskAgain ? t('checkIn.permissionOpenSettings') : t('checkIn.permissionAllowCamera')}
           </Text>
         </TouchableOpacity>
 
@@ -62,7 +65,7 @@ export function ScannerPermissionView({
           onPress={onOpenManualEntry}
         >
           <Ionicons name="keypad-outline" size={18} color="#ffffff" style={{ marginRight: 8 }} />
-          <Text style={styles.permissionSecondaryButtonText}>Saisir le code manuellement</Text>
+          <Text style={styles.permissionSecondaryButtonText}>{t('checkIn.permissionManualEntry')}</Text>
         </TouchableOpacity>
       </View>
     </View>

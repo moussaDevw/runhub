@@ -1,55 +1,125 @@
-import { View, Text, TextInput, StyleSheet, TextInputProps, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TextInputProps,
+  TouchableOpacity,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
+import { Radius, Spacing, Typography } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
-interface FormInputProps extends TextInputProps {
+export interface FormInputProps extends TextInputProps {
   label: string;
   rightLabel?: string;
   onRightLabelPress?: () => void;
   rightSuffix?: string;
+  error?: string;
+  disabled?: boolean;
   containerStyle?: StyleProp<ViewStyle>;
 }
 
-export function FormInput({ 
-  label, 
-  style, 
+export function FormInput({
+  label,
+  style,
   rightLabel,
   onRightLabelPress,
   rightSuffix,
+  error,
+  disabled = false,
   containerStyle,
-  ...rest 
+  onFocus,
+  onBlur,
+  ...rest
 }: FormInputProps) {
+  const theme = useTheme();
+  const [isFocused, setIsFocused] = useState(false);
+
+  const handleFocus = (e: any) => {
+    setIsFocused(true);
+    onFocus?.(e);
+  };
+
+  const handleBlur = (e: any) => {
+    setIsFocused(false);
+    onBlur?.(e);
+  };
+
+  const getBorderColor = () => {
+    if (error) return theme.danger;
+    if (isFocused) return theme.inputBorderFocus;
+    return theme.inputBorder;
+  };
+
   return (
-    <View style={[styles.container, containerStyle]}>
+    <View style={[styles.container, containerStyle, disabled && styles.disabled]}>
       {/* Labels Row */}
       <View style={styles.labelRow}>
-        <Text style={styles.label}>{label}</Text>
-        
+        <Text style={[styles.label, { color: error ? theme.danger : theme.ink3 }]}>
+          {label}
+        </Text>
+
         {rightLabel && (
-          <TouchableOpacity activeOpacity={0.7} onPress={onRightLabelPress}>
-            <Text style={styles.rightLabel}>{rightLabel}</Text>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={onRightLabelPress}
+            disabled={disabled}
+          >
+            <Text style={[styles.rightLabel, { color: theme.textSecondary }]}>
+              {rightLabel}
+            </Text>
           </TouchableOpacity>
         )}
       </View>
 
       {/* Input Container */}
-      <View style={[styles.inputContainer, rest.multiline && styles.multilineContainer]}>
+      <View
+        style={[
+          styles.inputContainer,
+          {
+            backgroundColor: theme.inputBackground,
+            borderColor: getBorderColor(),
+            borderWidth: isFocused || error ? 1.5 : 1,
+          },
+          rest.multiline && styles.multilineContainer,
+        ]}
+      >
         <TextInput
-          style={[styles.input, rest.multiline && styles.multilineInput, style]}
-          placeholderTextColor={Colors.light.ink3}
+          style={[
+            styles.input,
+            { color: theme.text },
+            rest.multiline && styles.multilineInput,
+            style,
+          ]}
+          placeholderTextColor={theme.ink3}
+          editable={!disabled}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           {...rest}
         />
-        
+
         {rightSuffix && (
-          <Text style={styles.suffix}>{rightSuffix}</Text>
+          <Text style={[styles.suffix, { color: theme.ink3 }]}>{rightSuffix}</Text>
         )}
       </View>
+
+      {/* Error Message */}
+      {error ? (
+        <Text style={[styles.errorText, { color: theme.danger }]}>{error}</Text>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: Spacing.space24,
+    marginBottom: Spacing.space20,
+  },
+  disabled: {
+    opacity: 0.55,
   },
   labelRow: {
     flexDirection: 'row',
@@ -60,21 +130,19 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: Typography.meta.fontFamily,
-    fontSize: 10,
-    color: Colors.light.ink3,
+    fontSize: 11,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.8,
+    fontWeight: '600',
   },
   rightLabel: {
     fontFamily: Typography.meta.fontFamily,
-    fontSize: 10,
-    color: '#65625e',
+    fontSize: 11,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
+    borderRadius: Radius.sm,
     paddingHorizontal: Spacing.space16,
     minHeight: 52,
   },
@@ -86,9 +154,8 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: Typography.corpsGras.fontFamily,
     fontSize: 15,
-    color: Colors.light.text,
     height: '100%',
-    paddingVertical: 0, // Reset default padding for android
+    paddingVertical: 0,
   },
   multilineInput: {
     minHeight: 80,
@@ -97,8 +164,13 @@ const styles = StyleSheet.create({
   },
   suffix: {
     fontFamily: Typography.meta.fontFamily,
-    fontSize: 10,
-    color: Colors.light.ink3,
+    fontSize: 11,
     marginLeft: 8,
+  },
+  errorText: {
+    fontFamily: Typography.corps.fontFamily,
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
   },
 });

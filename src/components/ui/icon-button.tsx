@@ -1,82 +1,102 @@
-import { TouchableOpacity, View, StyleSheet } from 'react-native';
+import { TouchableOpacity, View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors,  Radius, AccentColors } from '@/constants/theme';
+import { Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
-interface IconButtonProps {
+export interface IconButtonProps {
   iconName: keyof typeof Ionicons.glyphMap;
   onPress?: () => void;
   hasBadge?: boolean;
   variant?: 'solid' | 'glass' | 'outline' | 'liked' | 'ghost';
+  size?: number;
+  style?: StyleProp<ViewStyle>;
 }
 
-export function IconButton({ iconName, onPress, hasBadge, variant = 'solid' }: IconButtonProps) {
+export function IconButton({
+  iconName,
+  onPress,
+  hasBadge,
+  variant = 'solid',
+  size = 22,
+  style,
+}: IconButtonProps) {
+  const theme = useTheme();
+
   const isGlass = variant === 'glass';
   const isOutline = variant === 'outline';
   const isLiked = variant === 'liked';
   const isGhost = variant === 'ghost';
-  
+
   const getIconColor = () => {
-    if (isOutline || isGhost) return Colors.light.text;
-    return '#ffffff';
+    if (isLiked) return '#ffffff';
+    if (isOutline || isGhost) return theme.text;
+    if (isGlass) return theme.text;
+    return theme.background;
+  };
+
+  const getContainerStyle = () => {
+    if (isLiked) {
+      return { backgroundColor: theme.primary };
+    }
+    if (isOutline) {
+      return {
+        backgroundColor: theme.cardBackground,
+        borderWidth: 1,
+        borderColor: theme.line,
+      };
+    }
+    if (isGhost) {
+      return {
+        backgroundColor: 'transparent',
+        width: 40,
+        height: 40,
+      };
+    }
+    if (isGlass) {
+      return { backgroundColor: theme.surfaceGhost };
+    }
+    // solid
+    return { backgroundColor: theme.text };
   };
 
   return (
-    <TouchableOpacity 
-      activeOpacity={0.8} 
-      onPress={onPress} 
-      style={[
-        styles.container, 
-        isGlass && styles.glassContainer,
-        isOutline && styles.outlineContainer,
-        isLiked && styles.likedContainer,
-        isGhost && styles.ghostContainer,
-      ]}
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={onPress}
+      style={[styles.container, getContainerStyle(), style]}
     >
-      <Ionicons name={iconName} size={22} color={getIconColor()} />
-      {hasBadge && <View style={[styles.badge, isOutline && styles.badgeOutline]} />}
+      <Ionicons name={iconName} size={size} color={getIconColor()} />
+      {hasBadge && (
+        <View
+          style={[
+            styles.badge,
+            {
+              backgroundColor: theme.primary,
+              borderColor: isGhost ? theme.background : theme.cardBackground,
+            },
+          ]}
+        />
+      )}
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: Radius.pill,
-    backgroundColor: '#232220', // Ink
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
-  glassContainer: {
-    backgroundColor: 'rgba(35, 34, 32, 0.4)', // Semi-transparent ink
-  },
-  outlineContainer: {
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: Colors.light.backgroundElement,
-  },
-  likedContainer: {
-    backgroundColor: AccentColors.bissap,
-  },
-  ghostContainer: {
-    backgroundColor: 'transparent',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
   badge: {
     position: 'absolute',
-    top: 12,
-    right: 12,
+    top: 10,
+    right: 10,
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: AccentColors.bissap, // Red notification dot
     borderWidth: 1.5,
-    borderColor: '#232220', // Same as container background to cut it out
-  },
-  badgeOutline: {
-    borderColor: '#ffffff',
   },
 });

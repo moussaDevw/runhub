@@ -1,15 +1,16 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Colors,  Spacing, Typography, AccentColors } from '@/constants/theme';
-import { FavoriteItem } from '@/components/ui/favorite-item';
+import { Colors, Spacing, Typography, AccentColors } from '@/constants/theme';
+import { FavoriteItem, FavoriteItemSkeleton } from '@/features/profile/components';
+import { HStack, Screen } from '@/components/layout';
+import { useTheme } from '@/hooks/use-theme';
 import { useFavoritesScreen } from '@/features/profile/hooks/useFavoritesScreen';
 
 export function FavoritesScreen() {
-  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const theme = useTheme();
   const {
     favoriteEvents,
     handleUnlike,
@@ -20,56 +21,72 @@ export function FavoritesScreen() {
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <View style={styles.emptyIconCircle}>
-        <Ionicons name="heart-outline" size={32} color={Colors.light.ink3} />
+        <Ionicons name="heart-outline" size={32} color={theme.ink3} />
       </View>
-      <Text style={styles.emptyTitle}>{t('favorites.emptyTitle')}</Text>
-      <Text style={styles.emptySubtitle}>{t('favorites.emptySubtitle')}</Text>
+      <Text style={[styles.emptyTitle, { color: theme.text }]}>{t('favorites.emptyTitle')}</Text>
+      <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>{t('favorites.emptySubtitle')}</Text>
       
-      <TouchableOpacity style={styles.exploreButton} onPress={() => router.back()}>
-        <Text style={styles.exploreButtonText}>{t('favorites.explore')}</Text>
+      <TouchableOpacity
+        style={[styles.exploreButton, { backgroundColor: theme.cardBackground, borderColor: theme.line }]}
+        onPress={() => router.back()}
+        accessibilityRole="button"
+      >
+        <Text style={[styles.exploreButtonText, { color: theme.text }]}>{t('favorites.explore')}</Text>
       </TouchableOpacity>
     </View>
   );
 
-  return (
-    <View style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
+  const header = (
+    <HStack align="center" justify="space-between" style={[styles.header, { backgroundColor: theme.background, borderBottomColor: theme.line }]}>
+      <HStack align="center">
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back', { defaultValue: 'Retour' })}
+        >
+          <Ionicons name="chevron-back" size={24} color={theme.text} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>{t('favorites.title')}</Text>
+      </HStack>
+      <Text style={styles.headerActionText}>{favoriteEvents.length} {t('favorites.saved')}</Text>
+    </HStack>
+  );
 
-      {/* HEADER */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, Spacing.space12) }]}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={24} color={Colors.light.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('favorites.title')}</Text>
-        </View>
-        <Text style={styles.headerActionText}>{favoriteEvents.length} {t('favorites.saved')}</Text>
-      </View>
+  return (
+    <Screen
+      safeTop
+      safeBottom
+      scrollable
+      header={header}
+    >
+      <Stack.Screen options={{ headerShown: false }} />
 
       {/* CONTENT */}
       {isLoading ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={AccentColors.bissap} />
+        <View style={{ paddingTop: Spacing.space12 }}>
+          <FavoriteItemSkeleton />
+          <FavoriteItemSkeleton />
+          <FavoriteItemSkeleton />
         </View>
       ) : favoriteEvents.length === 0 ? (
         renderEmptyState()
       ) : (
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {favoriteEvents.map(fav => (
-            <FavoriteItem
-              key={fav.id}
-              title={fav.title}
-              time={fav.time}
-              location={fav.location}
-              price={fav.price}
-              imageSource={fav.imageSource}
-              onPress={() => router.push(`/event/${fav.id}` as any)}
-              onUnlike={() => handleUnlike(fav.id)}
-            />
-          ))}
-        </ScrollView>
+        favoriteEvents.map(fav => (
+          <FavoriteItem
+            key={fav.id}
+            title={fav.title}
+            time={fav.time}
+            location={fav.location}
+            price={fav.price}
+            imageSource={fav.imageSource}
+            onPress={() => router.push(`/event/${fav.id}` as any)}
+            onUnlike={() => handleUnlike(fav.id)}
+          />
+        ))
       )}
-    </View>
+    </Screen>
   );
 }
 

@@ -1,19 +1,22 @@
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { useTranslation } from 'react-i18next';
 
 import { Avatar } from '@/components/ui/avatar';
 import { IconButton } from '@/components/ui/icon-button';
-import { AccentColors, BackgroundThemes, Colors, Spacing, Typography } from '@/constants/theme';
+import { AccentColors, BackgroundThemes, Colors, Spacing, SportsColors, Typography } from '@/constants/theme';
+import { HStack, Screen, Spacer } from '@/components/layout';
+import { useTheme } from '@/hooks/use-theme';
 import { useJoinRequests, useRespondToJoinRequest } from '../hooks/useJoinRequests';
 import { ClubJoinRequest } from '../types/clubs.types';
 
 export function ClubRequestsScreen() {
+  const { t } = useTranslation();
+  const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { data: requests = [], isLoading, refetch } = useJoinRequests(id);
   const respondMutation = useRespondToJoinRequest(id);
 
@@ -27,50 +30,55 @@ export function ClubRequestsScreen() {
     const isPending = respondMutation.isPending;
 
     return (
-      <View style={styles.card}>
-        <View style={styles.cardLeft}>
+      <HStack align="center" justify="space-between" style={styles.card}>
+        <HStack align="center" style={styles.cardLeft}>
           {item.user.avatarUrl ? (
             <Image source={{ uri: item.user.avatarUrl }} style={styles.avatar} />
           ) : (
-            <Avatar initials={initials} size={44} backgroundColor="#b78ad6" />
+            <Avatar initials={initials} size={44} backgroundColor={SportsColors.yoga} />
           )}
           <View style={styles.cardInfo}>
-            <Text style={styles.userName}>{fullName}</Text>
-            <Text style={styles.userHandle}>@{item.user.username}</Text>
+            <Text style={[styles.userName, { color: theme.text }]}>{fullName}</Text>
+            <Text style={[styles.userHandle, { color: theme.textSecondary }]}>@{item.user.username}</Text>
           </View>
-        </View>
+        </HStack>
 
-        <View style={styles.cardActions}>
+        <HStack align="center" style={styles.cardActions}>
           <TouchableOpacity
             style={[styles.actionBtn, styles.rejectBtn]}
             onPress={() => handleRespond(item.id, 'REJECTED')}
             disabled={isPending}
+            hitSlop={8}
+            accessibilityRole="button"
           >
             <Ionicons name="close" size={18} color="#e06666" />
           </TouchableOpacity>
-          <View style={{ width: 8 }} />
+          <Spacer size="space8" horizontal />
           <TouchableOpacity
             style={[styles.actionBtn, styles.approveBtn]}
             onPress={() => handleRespond(item.id, 'APPROVED')}
             disabled={isPending}
+            hitSlop={8}
+            accessibilityRole="button"
           >
             <Ionicons name="checkmark" size={18} color="#ffffff" />
           </TouchableOpacity>
-        </View>
-      </View>
+        </HStack>
+      </HStack>
     );
   };
 
-  return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Stack.Screen options={{ headerShown: false }} />
+  const header = (
+    <HStack align="center" justify="space-between" style={[styles.header, { backgroundColor: theme.background, borderBottomColor: theme.line }]}>
+      <IconButton iconName="chevron-back" variant="ghost" onPress={() => router.back()} />
+      <Text style={[styles.headerTitle, { color: theme.text }]}>{t('club.joinRequests')}</Text>
+      <View style={{ width: 40 }} />
+    </HStack>
+  );
 
-      {/* Header */}
-      <View style={styles.header}>
-        <IconButton iconName="chevron-back" variant="ghost" onPress={() => router.back()} />
-        <Text style={styles.headerTitle}>Demandes d'adhésion</Text>
-        <View style={{ width: 40 }} />
-      </View>
+  return (
+    <Screen safeTop safeBottom header={header}>
+      <Stack.Screen options={{ headerShown: false }} />
 
       {isLoading ? (
         <View style={styles.center}>
@@ -78,9 +86,9 @@ export function ClubRequestsScreen() {
         </View>
       ) : requests.length === 0 ? (
         <View style={styles.center}>
-          <Ionicons name="people-outline" size={56} color={Colors.light.ink3} />
-          <Text style={styles.emptyTitle}>Aucune demande en attente</Text>
-          <Text style={styles.emptySubtitle}>Toutes les demandes ont été traitées.</Text>
+          <Ionicons name="people-outline" size={56} color={theme.ink3} />
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>{t('club.noPendingRequests')}</Text>
+          <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>{t('club.allRequestsProcessed')}</Text>
         </View>
       ) : (
         <FlatList
@@ -93,7 +101,7 @@ export function ClubRequestsScreen() {
           refreshing={false}
         />
       )}
-    </View>
+    </Screen>
   );
 }
 

@@ -6,6 +6,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 import { AccentColors, Colors, Spacing, Typography } from '@/constants/theme';
 import { CheckInScanResult } from '@/features/events/api/events.api';
@@ -34,6 +35,8 @@ export function ScanResultSheet({
   onBack,
   insetsBottom = 0,
 }: ScanResultSheetProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={[styles.bottomArea, { paddingBottom: Math.max(insetsBottom, 24) }]}>
       {/* IDLE / MANUAL ENTRY BUTTON */}
@@ -45,7 +48,7 @@ export function ScanResultSheet({
             onPress={onOpenManualEntry}
           >
             <Ionicons name="keypad-outline" size={18} color={Colors.light.text} style={{ marginRight: 8 }} />
-            <Text style={styles.manualEntryButtonText}>Saisir le code</Text>
+            <Text style={styles.manualEntryButtonText}>{t('checkIn.enterCode')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -58,7 +61,7 @@ export function ScanResultSheet({
               <Ionicons name="checkmark" size={32} color="#ffffff" />
             </View>
             <View style={styles.resultTextContainer}>
-              <Text style={styles.resultTitle}>Billet valide</Text>
+              <Text style={styles.resultTitle}>{t('checkIn.validTicket')}</Text>
               <Text style={styles.resultSubtitle}>
                 {participantName} · {priceText} · Code : {scanResult?.registration?.ticketCode}
               </Text>
@@ -67,13 +70,13 @@ export function ScanResultSheet({
 
           <View style={styles.resultActions}>
             <TouchableOpacity style={styles.secondaryButton} onPress={onBack}>
-              <Text style={styles.secondaryButtonText}>Terminer</Text>
+              <Text style={styles.secondaryButtonText}>{t('checkIn.finish')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.primaryButton, { backgroundColor: '#2f6b4d' }]}
               onPress={onResetScan}
             >
-              <Text style={styles.primaryButtonText}>Scanner le suivant</Text>
+              <Text style={styles.primaryButtonText}>{t('checkIn.scanNext')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -87,22 +90,22 @@ export function ScanResultSheet({
               <Ionicons name="time-outline" size={32} color="#ffffff" />
             </View>
             <View style={styles.resultTextContainer}>
-              <Text style={styles.resultTitle}>Déjà utilisé</Text>
+              <Text style={styles.resultTitle}>{t('checkIn.alreadyUsed')}</Text>
               <Text style={styles.resultSubtitle}>
-                {participantName} · Billet déjà scanné auparavant
+                {t('checkIn.alreadyUsedDesc', { name: participantName })}
               </Text>
             </View>
           </View>
 
           <View style={styles.resultActions}>
             <TouchableOpacity style={styles.secondaryButton} onPress={onBack}>
-              <Text style={styles.secondaryButtonText}>Terminer</Text>
+              <Text style={styles.secondaryButtonText}>{t('checkIn.finish')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.primaryButton, { backgroundColor: '#d98b2b' }]}
               onPress={onResetScan}
             >
-              <Text style={styles.primaryButtonText}>Scanner le suivant</Text>
+              <Text style={styles.primaryButtonText}>{t('checkIn.scanNext')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -112,26 +115,26 @@ export function ScanResultSheet({
       {scanState === 'invalid' && (
         <View style={styles.resultSheet}>
           <View style={styles.resultInfoRow}>
-            <View style={[styles.resultIconWrapper, { backgroundColor: '#b8324f' }]}>
+            <View style={[styles.resultIconWrapper, { backgroundColor: AccentColors.bissap }]}>
               <Ionicons name="alert-circle" size={32} color="#ffffff" />
             </View>
             <View style={styles.resultTextContainer}>
-              <Text style={styles.resultTitle}>Billet non reconnu</Text>
+              <Text style={styles.resultTitle}>{t('checkIn.invalidTicket')}</Text>
               <Text style={styles.resultSubtitle} numberOfLines={2}>
-                {errorMessage || 'Code invalide ou billet non associé à cet événement'}
+                {errorMessage || t('checkIn.invalidTicketDesc')}
               </Text>
             </View>
           </View>
 
           <View style={styles.resultActions}>
             <TouchableOpacity style={styles.secondaryButton} onPress={onBack}>
-              <Text style={styles.secondaryButtonText}>Terminer</Text>
+              <Text style={styles.secondaryButtonText}>{t('checkIn.finish')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.primaryButton, { backgroundColor: AccentColors.bissap }]}
               onPress={onResetScan}
             >
-              <Text style={styles.primaryButtonText}>Réessayer</Text>
+              <Text style={styles.primaryButtonText}>{t('checkIn.retry')}</Text>
             </TouchableOpacity>
           </View>
         </View>

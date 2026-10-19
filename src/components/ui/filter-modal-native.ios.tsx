@@ -1,56 +1,124 @@
-import { AccentColors, Colors, Spacing, Typography } from '@/constants/theme';
+import { HStack, VStack } from '@/components/layout';
+import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
+import { IconButton } from '@/components/ui/icon-button';
+import { AccentColors, Colors, NeutralColors, Radius, Spacing, Typography } from '@/constants/theme';
+import { PRICE_FILTER_KEYS, WHEN_FILTER_KEYS } from '@/features/events/constants/filter.constants';
 import { BottomSheetModal, BottomSheetScrollView } from '@expo/ui/community/bottom-sheet';
 import { Host, Slider } from '@expo/ui/swift-ui';
 import { tint } from '@expo/ui/swift-ui/modifiers';
-import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useFilterModalNative } from './hooks/useFilterModalNative';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AppliedFilters, useFilterModalNative } from './hooks/useFilterModalNative';
 
 export interface FilterModalNativeProps {
   isVisible: boolean;
   onDismiss: () => void;
   activeDateFilter?: 'today' | 'weekend' | 'week' | 'month';
+  activeSportId?: string;
+  activePriceFilter?: string;
+  activeNeighborhood?: string;
   onApplyDateFilter?: (filter?: 'today' | 'weekend' | 'week' | 'month') => void;
+  onApplyFilters?: (filters: AppliedFilters) => void;
+  availableSports?: { id: string; label: string }[];
   availableNeighborhoods?: string[];
 }
-
-const WHEN_OPTIONS = [
-  { id: 'all', label: 'Tous' },
-  { id: 'today', label: "Aujourd'hui" },
-  { id: 'week', label: 'Cette semaine' },
-  { id: 'weekend', label: 'Ce week-end' },
-  { id: 'month', label: 'Ce mois-ci' }
-];
-
-const SPORT_OPTIONS = ['Running', 'Foot', 'Yoga', 'Basket', 'Cyclisme', 'Fitness'];
-const PRICE_OPTIONS = ['Tous', 'Gratuit', 'Payant'];
 
 function ChipRow({
   options,
   selected,
   onSelect,
 }: {
-  options: { id: string, label: string }[];
+  options: { id: string; label: string }[];
   selected: string;
   onSelect: (value: string) => void;
 }) {
   return (
-    <View style={styles.chipRow}>
-      {options.map((option) => {
-        const isActive = selected === option.id;
-        return (
-          <TouchableOpacity
+    <HStack wrap="wrap" gap="space8">
+      {options.map((option) => (
+        <Chip
+          key={option.id}
+          label={option.label}
+          isActive={selected === option.id}
+          onPress={() => onSelect(option.id)}
+          style={styles.chipResetMargin}
+        />
+      ))}
+    </HStack>
+  );
+}
+
+function HorizontalChipRow({
+  options,
+  selected,
+  onSelect,
+  numRows = 1,
+}: {
+  options: { id: string; label: string }[];
+  selected: string;
+  onSelect: (value: string) => void;
+  numRows?: number;
+}) {
+  if (numRows === 2) {
+    const half = Math.ceil(options.length / 2);
+    const row1 = options.slice(0, half);
+    const row2 = options.slice(half);
+
+    return (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.horizontalScroll}
+        contentContainerStyle={styles.horizontalScrollContent}
+      >
+        <VStack gap="space8">
+          <HStack gap="space8">
+            {row1.map((option) => (
+              <Chip
+                key={option.id}
+                label={option.label}
+                isActive={selected === option.id}
+                onPress={() => onSelect(option.id)}
+                style={styles.chipResetMargin}
+              />
+            ))}
+          </HStack>
+          <HStack gap="space8">
+            {row2.map((option) => (
+              <Chip
+                key={option.id}
+                label={option.label}
+                isActive={selected === option.id}
+                onPress={() => onSelect(option.id)}
+                style={styles.chipResetMargin}
+              />
+            ))}
+          </HStack>
+        </VStack>
+      </ScrollView>
+    );
+  }
+
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.horizontalScroll}
+      contentContainerStyle={styles.horizontalScrollContent}
+    >
+      <HStack gap="space8">
+        {options.map((option) => (
+          <Chip
             key={option.id}
-            activeOpacity={0.8}
+            label={option.label}
+            isActive={selected === option.id}
             onPress={() => onSelect(option.id)}
-            style={[styles.chip, isActive && styles.chipActive]}
-          >
-            <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{option.label}</Text>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
+            style={styles.chipResetMargin}
+          />
+        ))}
+      </HStack>
+    </ScrollView>
   );
 }
 
@@ -58,8 +126,31 @@ function SectionLabel({ title }: { title: string }) {
   return <Text style={styles.sectionLabel}>{title}</Text>;
 }
 
-export function FilterModalNative({ isVisible, onDismiss, activeDateFilter, onApplyDateFilter, availableNeighborhoods = [] }: FilterModalNativeProps) {
+export function FilterModalNative({
+  isVisible,
+  onDismiss,
+  activeDateFilter,
+  activeSportId,
+  activePriceFilter,
+  activeNeighborhood,
+  onApplyDateFilter,
+  onApplyFilters,
+  availableSports = [],
+  availableNeighborhoods = [],
+}: FilterModalNativeProps) {
+  const { t } = useTranslation();
   const bottomSheetRef = React.useRef<BottomSheetModal>(null);
+
+  const whenOptions = WHEN_FILTER_KEYS.map((opt) => ({ id: opt.id, label: t(opt.labelKey) }));
+  const priceOptions = PRICE_FILTER_KEYS.map((opt) => ({ id: opt.id, label: t(opt.labelKey) }));
+  const sportOptions = [
+    { id: 'all', label: t('explore.filterAll', { defaultValue: 'Tous les sports' }) },
+    ...availableSports.map((s) => ({ id: s.id, label: s.label })),
+  ];
+  const neighborhoodOptions = [
+    { id: 'all', label: t('explore.filterAll', { defaultValue: 'Tous les quartiers' }) },
+    ...availableNeighborhoods.map((n) => ({ id: n, label: n })),
+  ];
 
   const {
     when,
@@ -76,7 +167,11 @@ export function FilterModalNative({ isVisible, onDismiss, activeDateFilter, onAp
     handleClose,
   } = useFilterModalNative({
     activeDateFilter,
+    activeSportId,
+    activePriceFilter,
+    activeNeighborhood,
     onApplyDateFilter,
+    onApplyFilters,
     onDismiss: () => {
       bottomSheetRef.current?.dismiss();
       onDismiss();
@@ -95,132 +190,110 @@ export function FilterModalNative({ isVisible, onDismiss, activeDateFilter, onAp
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
-      snapPoints={['90%']}
+      snapPoints={['85%']}
       index={0}
       enablePanDownToClose
       backgroundStyle={styles.modalBackground}
       handleIndicatorStyle={styles.handleIndicator}
       onDismiss={onDismiss}
     >
-      <View style={{ flex: 1 }}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Filtres</Text>
-          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-            <Ionicons name="close" size={20} color={Colors.light.ink3} />
-          </TouchableOpacity>
-        </View>
+      <View style={styles.container}>
+        {/* Header */}
+        <HStack align="center" justify="space-between" style={styles.header}>
+          <Text style={styles.headerTitle}>{t('filter.title')}</Text>
+          <IconButton
+            iconName="close"
+            variant="ghost"
+            size={20}
+            onPress={handleClose}
+            style={styles.closeButton}
+          />
+        </HStack>
 
         <BottomSheetScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* QUAND */}
-          <SectionLabel title="QUAND" />
-          <ChipRow options={WHEN_OPTIONS} selected={when} onSelect={setWhen} />
+          <VStack gap="space4">
+            {/* QUAND */}
+            <SectionLabel title={t('filter.when')} />
+            <ChipRow options={whenOptions} selected={when} onSelect={setWhen} />
 
-          {/* SPORT */}
-          <SectionLabel title="SPORT" />
-          <View style={styles.chipRow}>
-            {SPORT_OPTIONS.map((option) => {
-              const isActive = sport === option;
-              return (
-                <TouchableOpacity
-                  key={option}
-                  activeOpacity={0.8}
-                  onPress={() => setSport(option)}
-                  style={[styles.chip, isActive && styles.chipActive]}
-                >
-                  <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{option}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+            {/* SPORT (2 lignes horizontales défilantes) */}
+            {sportOptions.length > 1 && (
+              <>
+                <SectionLabel title={t('filter.sport')} />
+                <HorizontalChipRow options={sportOptions} selected={sport} onSelect={setSport} numRows={2} />
+              </>
+            )}
 
-          {/* QUARTIER */}
-          {availableNeighborhoods.length > 0 && (
-            <>
-              <SectionLabel title="QUARTIER" />
-              <View style={styles.chipRow}>
-                {availableNeighborhoods.map((option) => {
-                  const isActive = neighborhood === option;
-                  return (
-                    <TouchableOpacity
-                      key={option}
-                      activeOpacity={0.8}
-                      onPress={() => setNeighborhood(option)}
-                      style={[styles.chip, isActive && styles.chipActive]}
-                    >
-                      <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{option}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </>
-          )}
+            {/* QUARTIER (1 ligne horizontale défilante) */}
+            {neighborhoodOptions.length > 1 && (
+              <>
+                <SectionLabel title={t('filter.neighborhood')} />
+                <HorizontalChipRow options={neighborhoodOptions} selected={neighborhood} onSelect={setNeighborhood} />
+              </>
+            )}
 
-          {/* PRIX */}
-          <SectionLabel title="PRIX" />
-          <View style={styles.chipRow}>
-            {PRICE_OPTIONS.map((option) => {
-              const isActive = price === option;
-              return (
-                <TouchableOpacity
-                  key={option}
-                  activeOpacity={0.8}
-                  onPress={() => setPrice(option)}
-                  style={[styles.chip, isActive && styles.chipActive]}
-                >
-                  <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{option}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+            {/* PRIX */}
+            <SectionLabel title={t('filter.price')} />
+            <ChipRow options={priceOptions} selected={price} onSelect={setPrice} />
 
-          {/* DISTANCE */}
-          <View style={styles.distanceHeader}>
-            <Text style={styles.sectionLabel}>DISTANCE</Text>
-            <Text style={styles.distanceValue}>· {Math.round(distance)} KM</Text>
-          </View>
+            {/* DISTANCE */}
+            <HStack align="center" style={styles.distanceHeader}>
+              <Text style={styles.sectionLabel}>{t('filter.distance')}</Text>
+              <Text style={styles.distanceValue}>· {Math.round(distance)} KM</Text>
+            </HStack>
 
-          {/* Native SwiftUI Slider */}
-          <Host style={{ width: '100%', height: 44, justifyContent: 'center' }}>
-            <Slider
-              value={distance}
-              min={1}
-              max={20}
-              step={1}
-              onValueChange={setDistance}
-              modifiers={[tint(AccentColors.bissap)]}
-            />
-          </Host>
+            {/* Native SwiftUI Slider */}
+            <Host style={styles.sliderHost}>
+              <Slider
+                value={distance}
+                min={1}
+                max={20}
+                step={1}
+                onValueChange={setDistance}
+                modifiers={[tint(AccentColors.bissap)]}
+              />
+            </Host>
+          </VStack>
         </BottomSheetScrollView>
 
-        <View style={[styles.footer, { paddingHorizontal: Spacing.space20, paddingBottom: 2 }]}>
-          <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-            <Text style={styles.resetText}>Réinitialiser</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.applyButton} onPress={handleClose}>
-            <Text style={styles.applyText}>Afficher les résultats</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Footer */}
+        <HStack align="center" justify="space-between" gap="space12" style={styles.footer}>
+          <Button
+            variant="ghost"
+            size="md"
+            label={t('filter.reset')}
+            onPress={handleReset}
+            style={styles.resetButton}
+          />
+          <Button
+            variant="primary"
+            size="md"
+            label={t('filter.apply')}
+            onPress={handleClose}
+            style={styles.applyButton}
+          />
+        </HStack>
       </View>
     </BottomSheetModal>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   modalBackground: {
-    backgroundColor: '#FAFAF9', // Ivory/white background like the design
-    borderRadius: 24,
+    backgroundColor: Colors.light.cardBackground,
+    borderRadius: Radius.lg,
   },
   handleIndicator: {
-    backgroundColor: '#e3e2df',
+    backgroundColor: Colors.light.line,
     width: 40,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: Spacing.space20,
     paddingVertical: Spacing.space12,
   },
@@ -232,10 +305,8 @@ const styles = StyleSheet.create({
   closeButton: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: Radius.pill,
     backgroundColor: Colors.light.backgroundElement,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   scrollContent: {
     paddingHorizontal: Spacing.space20,
@@ -247,78 +318,48 @@ const styles = StyleSheet.create({
     color: Colors.light.ink3,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
-    marginTop: 16,
-    marginBottom: 12,
+    marginTop: Spacing.space16,
+    marginBottom: Spacing.space8,
   },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+  chipResetMargin: {
+    marginRight: 0,
   },
-  chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#e3e2df',
-    backgroundColor: '#ffffff', // White by default
+  horizontalScroll: {
+    marginHorizontal: -Spacing.space20,
   },
-  chipActive: {
-    backgroundColor: Colors.light.text,
-    borderColor: Colors.light.text,
-  },
-  chipText: {
-    fontFamily: Typography.corps.fontFamily,
-    fontSize: 14,
-    color: '#65625e',
-  },
-  chipTextActive: {
-    color: '#ffffff',
-    fontWeight: '600',
+  horizontalScrollContent: {
+    paddingHorizontal: Spacing.space20,
+    paddingVertical: 2,
   },
   distanceHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: Spacing.space16,
+    marginBottom: Spacing.space8,
   },
   distanceValue: {
     fontFamily: Typography.meta.fontFamily,
     fontSize: 10,
     color: Colors.light.ink3,
     letterSpacing: 1,
-    marginLeft: 8,
+    marginLeft: Spacing.space8,
     textTransform: 'uppercase',
   },
+  sliderHost: {
+    width: '100%',
+    height: 44,
+    justifyContent: 'center',
+  },
   footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: Spacing.space24,
+    paddingHorizontal: Spacing.space20,
+    paddingTop: Spacing.space16,
     paddingBottom: Spacing.space24,
-    marginTop: Spacing.space24,
     borderTopWidth: 1,
     borderTopColor: Colors.light.backgroundElement,
   },
   resetButton: {
-    paddingVertical: Spacing.space12,
-    paddingRight: Spacing.space16,
-  },
-  resetText: {
-    fontFamily: Typography.corpsGras.fontFamily,
-    fontSize: 15,
-    color: '#65625e',
+    width: 'auto',
+    paddingHorizontal: Spacing.space12,
   },
   applyButton: {
     flex: 1,
-    marginLeft: Spacing.space12,
-    backgroundColor: AccentColors.bissap, // The red button color
-    borderRadius: 16,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  applyText: {
-    fontFamily: Typography.corpsGras.fontFamily,
-    fontSize: 16,
-    color: '#ffffff',
   },
 });

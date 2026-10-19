@@ -1,61 +1,69 @@
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { ReactNode } from 'react';
+import { TouchableOpacity, Text, StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
 import { Radius, Spacing, Typography } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
-interface ChipProps {
+export interface ChipProps {
   label: string;
   isActive?: boolean;
   onPress?: () => void;
+  icon?: ReactNode;
+  style?: StyleProp<ViewStyle>;
 }
 
-export function Chip({ label, isActive, onPress }: ChipProps) {
+export function Chip({ label, isActive = false, onPress, icon, style }: ChipProps) {
+  const theme = useTheme();
+
   return (
     <TouchableOpacity
       activeOpacity={0.8}
       onPress={onPress}
       style={[
         styles.container,
-        isActive ? styles.activeContainer : styles.inactiveContainer,
+        {
+          backgroundColor: isActive ? theme.text : theme.cardBackground,
+          borderColor: isActive ? theme.text : theme.line,
+        },
+        style,
       ]}
     >
-      <Text
-        style={[
-          styles.text,
-          isActive ? styles.activeText : styles.inactiveText,
-        ]}
-      >
-        {label}
-      </Text>
+      <View style={styles.content}>
+        {icon && <View style={styles.icon}>{icon}</View>}
+        <Text
+          style={[
+            styles.text,
+            {
+              color: isActive ? theme.background : theme.textSecondary,
+              fontWeight: isActive ? '700' : '500',
+            },
+          ]}
+        >
+          {label}
+        </Text>
+      </View>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    height: 36,
-    paddingHorizontal: Spacing.space16,
+    height: 32,
+    paddingHorizontal: Spacing.space12,
     borderRadius: Radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.space8,
-  },
-  activeContainer: {
-    backgroundColor: '#232220', // Ink
-  },
-  inactiveContainer: {
-    backgroundColor: '#ffffff', // Ivoire / White
     borderWidth: 1,
-    borderColor: '#e3e2df', // Line
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  icon: {
+    marginRight: 4,
   },
   text: {
-    fontFamily: Typography.meta.fontFamily, // Actually it looks like bold/medium sans
-    fontSize: 14,
-  },
-  activeText: {
-    color: '#ffffff',
-    fontWeight: '600',
-  },
-  inactiveText: {
-    color: '#65625e', // Ink-2
-    fontWeight: '500',
+    fontFamily: Typography.corps.fontFamily,
+    fontSize: 13,
   },
 });

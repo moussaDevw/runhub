@@ -12,32 +12,34 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AccentColors, BackgroundThemes, Colors, Spacing, Typography } from '@/constants/theme';
 import { useCreateModal } from '@/features/creation/store/useCreateModal';
-
-const ACTION_ITEMS = [
-  {
-    id: 'event',
-    icon: 'calendar-outline' as const,
-    title: 'Organiser un événement',
-    subtitle: 'Une sortie unique avec la communauté',
-    href: '/event/create',
-    color: AccentColors.bissap,
-    bgColor: '#fdf0f3',
-  },
-  {
-    id: 'club',
-    icon: 'people-outline' as const,
-    title: 'Créer un club',
-    subtitle: 'Fonder un groupe régulier',
-    href: '/club/create',
-    color: AccentColors.indigoWolof,
-    bgColor: '#f0f1f8',
-  },
-];
+import { useTranslation } from 'react-i18next';
 
 export function CreateBottomSheet() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { isVisible, close } = useCreateModal();
+
+  const actionItems = [
+    {
+      id: 'event',
+      icon: 'calendar-outline' as const,
+      title: t('createModal.eventTitle'),
+      subtitle: t('createModal.eventSubtitle'),
+      href: '/event/create',
+      color: AccentColors.bissap,
+      bgColor: AccentColors.bissapLight,
+    },
+    {
+      id: 'club',
+      icon: 'people-outline' as const,
+      title: t('createModal.clubTitle'),
+      subtitle: t('createModal.clubSubtitle'),
+      href: '/club/create',
+      color: AccentColors.indigoWolof,
+      bgColor: AccentColors.indigoLight,
+    },
+  ];
 
   // Keep modal mounted until exit animation completes
   const [modalMounted, setModalMounted] = useState(false);
@@ -99,7 +101,7 @@ export function CreateBottomSheet() {
 
             {/* Header */}
             <View style={styles.header}>
-              <Text style={styles.headerTitle}>Que voulez-vous créer ?</Text>
+              <Text style={styles.headerTitle}>{t('createModal.title')}</Text>
               <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
                 <Ionicons name="close" size={18} color={Colors.light.ink3} />
               </TouchableOpacity>
@@ -107,7 +109,7 @@ export function CreateBottomSheet() {
 
             {/* Action Cards */}
             <View style={styles.actionsContainer}>
-              {ACTION_ITEMS.map((item) => (
+              {actionItems.map((item) => (
                 <TouchableOpacity
                   key={item.id}
                   style={styles.actionCard}

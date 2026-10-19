@@ -16,11 +16,9 @@ import * as Location from 'expo-location';
 import { MapLibreView } from '@/components/ui/map-libre-view';
 import { Colors, AccentColors, Spacing, Typography } from '@/constants/theme';
 import { LocationApi, AutocompleteSuggestion } from '@/core/api/location.api';
+import { useTranslation } from 'react-i18next';
 
-const DAKAR_DEFAULT_COORDS = {
-  latitude: 14.7167,
-  longitude: -17.4677,
-};
+import { DAKAR_COORDINATES } from '@/constants/map';
 
 interface LocationPickerModalProps {
   isVisible: boolean;
@@ -43,6 +41,7 @@ export function LocationPickerModal({
   initialVenueName = '',
   initialCoords,
 }: LocationPickerModalProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   // Local state for picked location
@@ -54,7 +53,7 @@ export function LocationPickerModal({
 
   // Map controls
   const [centerCoords, setCenterCoords] = useState<{ latitude: number; longitude: number } | null>(
-    initialCoords ? { latitude: initialCoords.lat, longitude: initialCoords.lng } : DAKAR_DEFAULT_COORDS
+    initialCoords ? { latitude: initialCoords.lat, longitude: initialCoords.lng } : DAKAR_COORDINATES
   );
 
   // Search Autocomplete State
@@ -74,7 +73,7 @@ export function LocationPickerModal({
       /* eslint-disable react-hooks/set-state-in-effect */
       setSelectedCoords(initialCoords ? { latitude: initialCoords.lat, longitude: initialCoords.lng } : null);
       setResolvedAddressText(initialVenueName);
-      setCenterCoords(initialCoords ? { latitude: initialCoords.lat, longitude: initialCoords.lng } : DAKAR_DEFAULT_COORDS);
+      setCenterCoords(initialCoords ? { latitude: initialCoords.lat, longitude: initialCoords.lng } : DAKAR_COORDINATES);
       setGooglePlaceId(undefined);
       setCity(undefined);
       setCountry(undefined);
@@ -199,15 +198,15 @@ export function LocationPickerModal({
         {/* Modal Header */}
         <View style={[styles.mapHeaderBar, { paddingTop: Math.max(insets.top, 16) }]}>
           <TouchableOpacity onPress={handleClear} style={styles.mapHeaderAction}>
-            <Text style={styles.mapHeaderActionCancel}>Effacer</Text>
+            <Text style={styles.mapHeaderActionCancel}>{t('locationPicker.clear')}</Text>
           </TouchableOpacity>
-          <Text style={styles.mapHeaderTitle}>Lieu</Text>
+          <Text style={styles.mapHeaderTitle}>{t('locationPicker.title')}</Text>
           <TouchableOpacity
             onPress={handleConfirm}
             disabled={!selectedCoords || resolvingAddress}
             style={[styles.mapHeaderAction, (!selectedCoords || resolvingAddress) && { opacity: 0.4 }]}
           >
-            <Text style={styles.mapHeaderActionOk}>OK</Text>
+            <Text style={styles.mapHeaderActionOk}>{t('locationPicker.confirm')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -224,7 +223,7 @@ export function LocationPickerModal({
                       id: 'selected-point',
                       latitude: selectedCoords.latitude,
                       longitude: selectedCoords.longitude,
-                      label: 'Point sélectionné',
+                      label: t('locationPicker.selectedPoint'),
                     },
                   ]
                 : []
@@ -257,7 +256,7 @@ export function LocationPickerModal({
               ]}
               numberOfLines={1}
             >
-              {resolvedAddressText || 'Choisir un lieu'}
+              {resolvedAddressText || t('locationPicker.chooseLocation')}
             </Text>
             <Ionicons name="search" size={18} color={Colors.light.ink3} />
           </TouchableOpacity>
@@ -273,7 +272,7 @@ export function LocationPickerModal({
               <Ionicons name="search" size={18} color="#8e8e93" style={{ marginRight: 6 }} />
               <TextInput
                 style={styles.searchInput}
-                placeholder="Choisir un lieu"
+                placeholder={t('locationPicker.chooseLocation')}
                 placeholderTextColor="#8e8e93"
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -286,7 +285,7 @@ export function LocationPickerModal({
               )}
             </View>
             <TouchableOpacity onPress={() => setShowSearchOverlay(false)}>
-              <Text style={styles.cancelSearchBtnText}>Annuler</Text>
+              <Text style={styles.cancelSearchBtnText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -321,7 +320,7 @@ export function LocationPickerModal({
               ListEmptyComponent={
                 searchQuery.length >= 3 && !loadingSuggestions ? (
                   <View style={styles.emptySuggestionsContainer}>
-                    <Text style={styles.emptySuggestionsText}>Aucun lieu trouvé à Dakar.</Text>
+                    <Text style={styles.emptySuggestionsText}>{t('locationPicker.empty')}</Text>
                   </View>
                 ) : null
               }

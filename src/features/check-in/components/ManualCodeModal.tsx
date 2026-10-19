@@ -1,4 +1,4 @@
-import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Modal,
   StyleSheet,
@@ -25,6 +25,8 @@ export function ManualCodeModal({
   onSubmit,
   onClose,
 }: ManualCodeModalProps) {
+  const { t } = useTranslation();
+
   return (
     <Modal
       visible={visible}
@@ -34,9 +36,9 @@ export function ManualCodeModal({
     >
       <View style={styles.modalBackdrop}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Saisir le code du billet</Text>
+          <Text style={styles.modalTitle}>{t('checkIn.manualModalTitle')}</Text>
           <Text style={styles.modalSubtitle}>
-            Entrez le code alphanumérique à 8 caractères visible sur le billet du participant.
+            {t('checkIn.manualModalSubtitle')}
           </Text>
 
           <TextInput
@@ -52,7 +54,7 @@ export function ManualCodeModal({
 
           <View style={styles.modalActions}>
             <TouchableOpacity style={styles.modalCancelBtn} onPress={onClose}>
-              <Text style={styles.modalCancelText}>Annuler</Text>
+              <Text style={styles.modalCancelText}>{t('checkIn.manualModalCancel')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -60,7 +62,7 @@ export function ManualCodeModal({
               disabled={!value.trim()}
               onPress={onSubmit}
             >
-              <Text style={styles.modalSubmitText}>Valider</Text>
+              <Text style={styles.modalSubmitText}>{t('checkIn.manualModalValidate')}</Text>
             </TouchableOpacity>
           </View>
         </View>

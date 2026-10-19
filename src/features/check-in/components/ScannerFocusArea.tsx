@@ -1,18 +1,16 @@
-import React from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import {
   ActivityIndicator,
-  Dimensions,
   StyleSheet,
   Text,
-  View,
+  View
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
 import { Spacing, Typography } from '@/constants/theme';
+import { SCAN_FRAME_SIZE } from '../constants';
 import { ScanState } from '../hooks/useQrScannerScreen';
 
-const { width } = Dimensions.get('window');
-export const SCAN_FRAME_SIZE = width * 0.68;
+export { SCAN_FRAME_SIZE };
 
 export interface ScannerFocusAreaProps {
   scanState: ScanState;

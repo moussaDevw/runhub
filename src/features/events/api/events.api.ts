@@ -90,6 +90,8 @@ export interface FindAllEventsParams {
   sportId?: string;
   clubId?: string;
   dateFilter?: 'today' | 'weekend' | 'week' | 'month';
+  price?: 'free' | 'paid' | 'all' | string;
+  city?: string;
   page?: number;
   limit?: number;
 }
@@ -199,6 +201,8 @@ export const EventsApi = {
     if (params?.sportId) searchParams.set('sportId', params.sportId);
     if (params?.clubId) searchParams.set('clubId', params.clubId);
     if (params?.dateFilter) searchParams.set('dateFilter', params.dateFilter);
+    if (params?.price && params.price !== 'all') searchParams.set('price', params.price);
+    if (params?.city && params.city !== 'all') searchParams.set('city', params.city);
     if (params?.page) searchParams.set('page', String(params.page));
     if (params?.limit) searchParams.set('limit', String(params.limit));
 

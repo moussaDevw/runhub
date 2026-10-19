@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Stack } from 'expo-router';
+import { Stack as RouterStack } from 'expo-router';
 import {
   ActivityIndicator,
   RefreshControl,
@@ -11,10 +11,11 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
-import { CheckInProgress } from '@/components/ui/check-in-progress';
-import { ParticipantRow } from '@/components/ui/participant-row';
-import { AccentColors, Colors, Spacing, Typography } from '@/constants/theme';
+import { HStack, Screen, VStack } from '@/components/layout';
+import { CheckInProgress, ParticipantRow, ParticipantRowSkeleton } from '@/features/check-in/components';
+import { AccentColors, Colors, Radius, Shadows, Spacing, Typography, NeutralColors } from '@/constants/theme';
 import { formatPrice } from '@/core/utils/locale';
 import {
   getAvatarColor,
@@ -25,6 +26,7 @@ import {
 
 export function CheckInListScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const {
     event,
     presentation,
@@ -49,31 +51,31 @@ export function CheckInListScreen() {
   } = useCheckInListScreen();
 
   return (
-    <View style={[styles.container, { paddingTop: Math.max(insets.top, 16) }]}>
-      <Stack.Screen options={{ headerShown: false }} />
+    <Screen safeTop safeBottom={false} style={styles.container}>
+      <RouterStack.Screen options={{ headerShown: false }} />
 
       {/* HEADER */}
-      <View style={styles.header}>
+      <HStack align="center" justify="space-between" style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Ionicons name="chevron-back" size={24} color={Colors.light.text} />
         </TouchableOpacity>
 
-        <View style={styles.headerTitles}>
+        <VStack style={styles.headerTitles}>
           <Text style={styles.headerTitle} numberOfLines={1}>
-            {event?.title || 'Chargement...'}
+            {event?.title || t('checkIn.loading')}
           </Text>
           {presentation && (
             <Text style={styles.headerSubtitle}>
-              Check-in · {presentation.dateDay} {presentation.dateTime}
+              {t('checkIn.subtitle', { day: presentation.dateDay, time: presentation.dateTime })}
             </Text>
           )}
-        </View>
+        </VStack>
 
         <TouchableOpacity style={styles.editButton} onPress={handleGoToEdit}>
           <Ionicons name="create-outline" size={18} color={AccentColors.bissap} style={{ marginRight: 4 }} />
-          <Text style={styles.editText}>Modifier</Text>
+          <Text style={styles.editText}>{t('checkIn.edit')}</Text>
         </TouchableOpacity>
-      </View>
+      </HStack>
 
       {/* PROGRESS SECTION */}
       <CheckInProgress current={arrivedCount} total={totalCount} />
@@ -84,7 +86,7 @@ export function CheckInListScreen() {
           <Ionicons name="search" size={18} color={Colors.light.ink3} style={{ marginRight: 8 }} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Rechercher par nom ou code..."
+            placeholder={t('checkIn.searchPlaceholder')}
             placeholderTextColor={Colors.light.ink3}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -104,7 +106,7 @@ export function CheckInListScreen() {
             onPress={() => setFilterMode('all')}
           >
             <Text style={[styles.pillText, filterMode === 'all' && styles.pillTextActive]}>
-              Tous ({totalCount})
+              {t('checkIn.all', { count: totalCount })}
             </Text>
           </TouchableOpacity>
 
@@ -113,7 +115,7 @@ export function CheckInListScreen() {
             onPress={() => setFilterMode('arrived')}
           >
             <Text style={[styles.pillText, filterMode === 'arrived' && styles.pillTextActive]}>
-              Arrivés ({arrivedCount})
+              {t('checkIn.arrived', { count: arrivedCount })}
             </Text>
           </TouchableOpacity>
 
@@ -122,7 +124,7 @@ export function CheckInListScreen() {
             onPress={() => setFilterMode('pending')}
           >
             <Text style={[styles.pillText, filterMode === 'pending' && styles.pillTextActive]}>
-              À venir ({pendingCount})
+              {t('checkIn.pending', { count: pendingCount })}
             </Text>
           </TouchableOpacity>
         </View>
@@ -141,24 +143,28 @@ export function CheckInListScreen() {
         }
       >
         <Text style={styles.sectionTitle}>
-          PARTICIPANTS ({filteredParticipants.length})
+          {t('checkIn.participants', { count: filteredParticipants.length })}
         </Text>
 
         {isParticipantsLoading && participants.length === 0 ? (
-          <View style={styles.emptyState}>
-            <ActivityIndicator size="large" color={AccentColors.bissap} />
-            <Text style={styles.emptySubtitle}>Chargement des participants...</Text>
+          <View>
+            <ParticipantRowSkeleton />
+            <ParticipantRowSkeleton />
+            <ParticipantRowSkeleton />
+            <ParticipantRowSkeleton />
+            <ParticipantRowSkeleton />
+            <ParticipantRowSkeleton />
           </View>
         ) : filteredParticipants.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="people-outline" size={48} color={Colors.light.ink3} style={{ marginBottom: 12 }} />
             <Text style={styles.emptyTitle}>
-              {searchQuery ? 'Aucun participant trouvé' : 'Aucun participant inscrit'}
+              {searchQuery ? t('checkIn.noParticipantsFound') : t('checkIn.noParticipantsRegistered')}
             </Text>
             <Text style={styles.emptySubtitle}>
               {searchQuery
-                ? 'Essayez avec un autre mot-clé ou réinitialisez la recherche.'
-                : 'Les inscrits apparaîtront ici dès leur réservation.'}
+                ? t('checkIn.searchHint')
+                : t('checkIn.emptyHint')}
             </Text>
           </View>
         ) : (
@@ -169,9 +175,9 @@ export function CheckInListScreen() {
             const isArrived = p.status === 'checked_in';
 
             // Payment display
-            let paymentText = 'Gratuit';
+            let paymentText = t('event.free');
             if (event && event.price > 0) {
-              paymentText = p.status === 'pending' ? 'Paiement en attente' : `Payé · ${formatPrice(event.price)}`;
+              paymentText = p.status === 'pending' ? t('eventDetail.paymentPending', { defaultValue: 'Paiement en attente' }) : `Payé · ${formatPrice(event.price)}`;
             }
 
             return (
@@ -181,7 +187,7 @@ export function CheckInListScreen() {
                 initials={initials}
                 avatarColor={color}
                 paymentStatus={paymentText}
-                status={isArrived ? 'Arrivé' : 'À venir'}
+                isArrived={isArrived}
                 isLoading={mutatingRegistrationId === p.id}
                 onCheckInToggle={() => handleToggle(p.id)}
               />
@@ -191,24 +197,24 @@ export function CheckInListScreen() {
       </ScrollView>
 
       {/* FLOATING BUTTON */}
-      <View style={[styles.floatingButtonContainer, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+      <View style={[styles.floatingButtonContainer, { paddingBottom: Math.max(insets.bottom, Spacing.space24) }]}>
         <TouchableOpacity
           style={styles.floatingButton}
           activeOpacity={0.8}
           onPress={handleGoToScan}
         >
-          <Ionicons name="scan-outline" size={20} color="#ffffff" style={{ marginRight: 8 }} />
-          <Text style={styles.floatingButtonText}>Scanner les billets</Text>
+          <Ionicons name="scan-outline" size={20} color={NeutralColors.white} style={{ marginRight: Spacing.space8 }} />
+          <Text style={styles.floatingButtonText}>{t('checkIn.scanTickets')}</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f4',
+    backgroundColor: Colors.light.background,
   },
   header: {
     flexDirection: 'row',
@@ -233,7 +239,7 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontFamily: Typography.corps.fontFamily,
     fontSize: 12,
-    color: '#65625e',
+    color: Colors.light.textSecondary,
     marginTop: 2,
   },
   editButton: {
@@ -241,7 +247,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1.5,
     borderColor: AccentColors.bissap,
-    borderRadius: 8,
+    borderRadius: Radius.xs,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
@@ -254,17 +260,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.space20,
     paddingTop: Spacing.space8,
     paddingBottom: Spacing.space8,
-    backgroundColor: '#f5f5f4',
+    backgroundColor: Colors.light.background,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    backgroundColor: Colors.light.cardBackground,
+    borderRadius: Radius.sm,
     paddingHorizontal: Spacing.space12,
     height: 44,
     borderWidth: 1,
-    borderColor: '#e3e3e1',
+    borderColor: Colors.light.line,
     marginBottom: Spacing.space12,
   },
   searchInput: {
@@ -281,8 +287,8 @@ const styles = StyleSheet.create({
   pill: {
     paddingHorizontal: Spacing.space12,
     paddingVertical: 6,
-    borderRadius: 99,
-    backgroundColor: '#e7e5e4',
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.light.backgroundElement,
   },
   pillActive: {
     backgroundColor: Colors.light.text,
@@ -290,10 +296,10 @@ const styles = StyleSheet.create({
   pillText: {
     fontFamily: Typography.corpsGras.fontFamily,
     fontSize: 12,
-    color: '#65625e',
+    color: Colors.light.textSecondary,
   },
   pillTextActive: {
-    color: '#ffffff',
+    color: NeutralColors.white,
   },
   scrollContent: {
     paddingHorizontal: Spacing.space20,
@@ -331,7 +337,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'transparent',
+    backgroundColor: NeutralColors.transparent,
     paddingHorizontal: Spacing.space20,
   },
   floatingButton: {
@@ -340,7 +346,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     height: 56,
-    borderRadius: 16,
+    borderRadius: Radius.btn,
     shadowColor: AccentColors.bissap,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
@@ -350,6 +356,6 @@ const styles = StyleSheet.create({
   floatingButtonText: {
     fontFamily: Typography.corpsGras.fontFamily,
     fontSize: 16,
-    color: '#ffffff',
+    color: NeutralColors.white,
   },
 });

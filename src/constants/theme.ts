@@ -14,11 +14,15 @@ export const BackgroundThemes = {
 // 02 Couleurs d'accent
 export const AccentColors = {
   bissap: '#b8324f', // Rouge hibiscus — accent de marque
+  bissapLight: '#fdf0f3', // Fond bissap léger
   terreDeGoree: '#b35a33', // Terracotta brûlée, organique
   safran: '#a9761f', // Or-moutarde épicé, solaire
   vertTeranga: '#5b7333', // Olive / palmeraie, naturel
+  terangaLight: '#eaf3ed', // Fond vert léger
   indigoWolof: '#46507e', // Indigo textile, profond
+  indigoLight: '#f0f1f8', // Fond indigo léger
   corailSunset: '#f2784f', // Le corail d’origine, énergique
+  verified: '#3b82f6', // Bleu vérifié
 } as const;
 
 // 03 Couleurs des sports
@@ -47,7 +51,19 @@ export const PaymentBrands = {
   carte: '#232220',
 } as const;
 
-// Surfaces du thème actif · Brume / Nuit mapped for backward compatibility
+// 06 Palette des avatars
+export const AvatarColors = [
+  '#f2784f',
+  '#2f6b4d',
+  '#b8324f',
+  '#8a5c9f',
+  '#d98b2b',
+  '#20639b',
+  '#3caea3',
+  '#ed553b',
+] as const;
+
+// Surfaces du thème actif · Brume / Nuit mapped with full component tokens
 export const Colors = {
   light: {
     // Brume Surfaces
@@ -58,8 +74,20 @@ export const Colors = {
     text: '#232220', // Ink
     textSecondary: '#65625e', // Ink-2
     ink3: '#a2a09b',
-    // Aliases mapped to brand accent
+    mutedText: '#8a8782',
+    // Surfaces & Card
+    cardBackground: '#ffffff',
+    cardBorder: '#eae7e3',
+    // Form Inputs
+    inputBackground: '#ffffff',
+    inputBorder: '#e3e2df',
+    inputBorderFocus: AccentColors.bissap,
+    surfaceGhost: 'rgba(35, 34, 32, 0.06)',
+    // Aliases mapped to brand accent & semantics
     primary: AccentColors.bissap,
+    danger: SemanticColors.invalide,
+    success: SemanticColors.valide,
+    warning: SemanticColors.dejaUtilise,
   },
   dark: {
     // Nuit Surfaces
@@ -68,10 +96,22 @@ export const Colors = {
     backgroundSelected: '#3d2f3c', // Approximation
     line: '#4a3a49',
     text: '#ffffff',
-    textSecondary: '#a2a09b',
-    ink3: '#65625e',
-    // Aliases mapped to brand accent
+    textSecondary: '#c5bfb9',
+    ink3: '#8a8089',
+    mutedText: '#6f666e',
+    // Surfaces & Card
+    cardBackground: '#261e25',
+    cardBorder: '#3d2f3c',
+    // Form Inputs
+    inputBackground: '#261e25',
+    inputBorder: '#3d2f3c',
+    inputBorderFocus: AccentColors.bissap,
+    surfaceGhost: 'rgba(255, 255, 255, 0.1)',
+    // Aliases mapped to brand accent & semantics
     primary: AccentColors.bissap,
+    danger: SemanticColors.invalide,
+    success: SemanticColors.valide,
+    warning: SemanticColors.dejaUtilise,
   },
 } as const;
 
@@ -122,12 +162,49 @@ export const Fonts = Platform.select({
   },
 });
 
+// 06 Couleurs neutres
+export const NeutralColors = {
+  white: '#ffffff',
+  black: '#000000',
+  transparent: 'transparent',
+  overlay30: 'rgba(0, 0, 0, 0.3)',
+  overlay40: 'rgba(29, 22, 28, 0.4)',
+  overlay60: 'rgba(29, 22, 28, 0.6)',
+} as const;
+
 // 07 Formes & espacements
 export const Radius = {
-  card: 20, // Cartes, photos, sheets
-  btn: 15,  // Boutons
+  xs: 8,
   sm: 12,   // Vignettes, champs
+  md: 16,   // Boutons, cartes compactes
+  card: 20, // Cartes standard
+  lg: 24,   // Grandes cartes, sheets
   pill: 999,// Chips, avatars, badges
+  btn: 16,  // Boutons
+} as const;
+
+export const Shadows = {
+  sm: {
+    shadowColor: NeutralColors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  card: {
+    shadowColor: NeutralColors.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  lg: {
+    shadowColor: NeutralColors.black,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 4,
+  },
 } as const;
 
 export const Spacing = {

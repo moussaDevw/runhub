@@ -6,6 +6,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 import { AccentColors, Spacing, Typography } from '@/constants/theme';
 
@@ -26,6 +27,8 @@ export function ScannerHeader({
   onBack,
   insetsTop = 0,
 }: ScannerHeaderProps) {
+  const { t } = useTranslation();
+
   return (
     <>
       <View style={[styles.header, { paddingTop: Math.max(insetsTop, 16) }]}>
@@ -33,7 +36,7 @@ export function ScannerHeader({
           <Ionicons name="close" size={24} color="#ffffff" />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Scanner les billets</Text>
+        <Text style={styles.headerTitle}>{t('checkIn.scanTickets')}</Text>
 
         <View style={styles.headerActions}>
           <TouchableOpacity
@@ -55,7 +58,7 @@ export function ScannerHeader({
       {continuousScan && (
         <View style={styles.continuousBadge}>
           <Ionicons name="infinite" size={14} color="#ffffff" style={{ marginRight: 6 }} />
-          <Text style={styles.continuousBadgeText}>Mode continu actif (réarmement auto)</Text>
+          <Text style={styles.continuousBadgeText}>{t('checkIn.continuousModeActive')}</Text>
         </View>
       )}
     </>

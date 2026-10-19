@@ -1,21 +1,34 @@
+import { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Typography, BackgroundThemes } from '@/constants/theme';
+import { Image } from 'expo-image';
+import { Typography, SportsColors } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
-interface AvatarProps {
+export interface AvatarProps {
+  uri?: string | null;
   initials?: string;
   size?: number;
   backgroundColor?: string;
   textColor?: string;
   borderWidth?: number;
+  borderColor?: string;
 }
 
 export function Avatar({
+  uri,
   initials = '',
   size = 40,
-  backgroundColor = '#b78ad6', // Default yoga purple
+  backgroundColor = SportsColors.yoga, // Default pleasant accent
   textColor = '#ffffff',
   borderWidth = 0,
+  borderColor,
 }: AvatarProps) {
+  const theme = useTheme();
+  const [imageFailed, setImageFailed] = useState(false);
+
+  const effectiveBorderColor = borderColor ?? theme.background;
+  const showImage = Boolean(uri && !imageFailed);
+
   return (
     <View
       style={[
@@ -24,45 +37,79 @@ export function Avatar({
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor,
+          backgroundColor: showImage ? theme.backgroundElement : backgroundColor,
           borderWidth,
-          borderColor: BackgroundThemes.Creme,
+          borderColor: effectiveBorderColor,
         },
       ]}
     >
-      {initials ? (
+      {showImage ? (
+        <Image
+          source={{ uri: uri! }}
+          style={[StyleSheet.absoluteFill, { borderRadius: size / 2 }]}
+          contentFit="cover"
+          transition={200}
+          onError={() => setImageFailed(true)}
+        />
+      ) : initials ? (
         <Text
           style={[
             styles.text,
-            { color: textColor, fontSize: size * 0.4 },
+            {
+              color: textColor,
+              fontSize: Math.max(10, Math.floor(size * 0.38)),
+            },
           ]}
         >
-          {initials}
+          {initials.toUpperCase()}
         </Text>
       ) : null}
     </View>
   );
 }
 
-interface AvatarGroupProps {
-  users: { id: string; initials: string; bgColor: string }[];
-  max?: number;
-  size?: number;
+export interface AvatarGroupUser {
+  id: string;
+  initials: string;
+  bgColor?: string;
+  avatarUrl?: string | null;
 }
 
-export function AvatarGroup({ users, max = 4, size = 28 }: AvatarGroupProps) {
+export interface AvatarGroupProps {
+  users: AvatarGroupUser[];
+  max?: number;
+  size?: number;
+  borderColor?: string;
+}
+
+export function AvatarGroup({
+  users,
+  max = 4,
+  size = 28,
+  borderColor,
+}: AvatarGroupProps) {
+  const theme = useTheme();
   const visibleUsers = users.slice(0, max);
   const overflow = users.length - max;
+  const effectiveBorderColor = borderColor ?? theme.background;
 
   return (
     <View style={styles.groupContainer}>
       {visibleUsers.map((user, index) => (
-        <View key={user.id} style={[styles.avatarWrapper, { zIndex: users.length - index }]}>
+        <View
+          key={user.id}
+          style={[
+            styles.avatarWrapper,
+            { zIndex: users.length - index },
+          ]}
+        >
           <Avatar
+            uri={user.avatarUrl}
             initials={user.initials}
             size={size}
-            backgroundColor={user.bgColor}
+            backgroundColor={user.bgColor || SportsColors.yoga}
             borderWidth={2}
+            borderColor={effectiveBorderColor}
           />
         </View>
       ))}
@@ -71,8 +118,10 @@ export function AvatarGroup({ users, max = 4, size = 28 }: AvatarGroupProps) {
           <Avatar
             initials={`+${overflow}`}
             size={size}
-            backgroundColor="#232220"
+            backgroundColor={theme.surfaceGhost}
+            textColor={theme.text}
             borderWidth={2}
+            borderColor={effectiveBorderColor}
           />
         </View>
       )}
@@ -88,12 +137,13 @@ const styles = StyleSheet.create({
   },
   text: {
     fontFamily: Typography.corpsGras.fontFamily,
+    fontWeight: '700',
   },
   groupContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   avatarWrapper: {
-    marginRight: -10, // overlap
+    marginRight: -8, // subtle overlap
   },
 });

@@ -1,15 +1,27 @@
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Radius, Spacing, Typography } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-interface SegmentedControlProps {
+export interface SegmentedControlProps {
   options: string[];
   selectedIndex: number;
   onChange: (index: number) => void;
 }
 
-export function SegmentedControl({ options, selectedIndex, onChange }: SegmentedControlProps) {
+export function SegmentedControl({
+  options,
+  selectedIndex,
+  onChange,
+}: SegmentedControlProps) {
+  const theme = useTheme();
+
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: theme.backgroundElement },
+      ]}
+    >
       {options.map((option, index) => {
         const isSelected = selectedIndex === index;
         return (
@@ -17,9 +29,23 @@ export function SegmentedControl({ options, selectedIndex, onChange }: Segmented
             key={option}
             activeOpacity={0.8}
             onPress={() => onChange(index)}
-            style={[styles.segment, isSelected && styles.segmentSelected]}
+            style={[
+              styles.segment,
+              isSelected && [
+                styles.segmentSelected,
+                { backgroundColor: theme.cardBackground },
+              ],
+            ]}
           >
-            <Text style={[styles.text, isSelected && styles.textSelected]}>
+            <Text
+              style={[
+                styles.text,
+                {
+                  color: isSelected ? theme.text : theme.ink3,
+                  fontWeight: isSelected ? '700' : '500',
+                },
+              ]}
+            >
               {option}
             </Text>
           </TouchableOpacity>
@@ -32,8 +58,7 @@ export function SegmentedControl({ options, selectedIndex, onChange }: Segmented
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: Colors.light.backgroundElement,
-    borderRadius: 99,
+    borderRadius: Radius.pill,
     padding: 3,
     marginBottom: Spacing.space12,
   },
@@ -42,22 +67,17 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 99,
+    borderRadius: Radius.pill,
   },
   segmentSelected: {
-    backgroundColor: '#ffffff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 2,
   },
   text: {
-    fontFamily: Typography.corpsGras.fontFamily,
+    fontFamily: Typography.corps.fontFamily,
     fontSize: 13,
-    color: Colors.light.ink3,
-  },
-  textSelected: {
-    color: Colors.light.text,
   },
 });

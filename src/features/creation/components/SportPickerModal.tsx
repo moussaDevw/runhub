@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Radius, Typography } from '@/constants/theme';
+import { useTranslation } from 'react-i18next';
 
 interface Sport {
   id: string;
@@ -33,6 +34,7 @@ export function SportPickerModal({
   sportsList,
   onSelectSport,
 }: SportPickerModalProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredSports = sportsList.filter((s) =>
@@ -57,7 +59,7 @@ export function SportPickerModal({
       >
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Choisir un sport</Text>
+            <Text style={styles.modalTitle}>{t('sportPicker.title')}</Text>
             <TouchableOpacity onPress={handleClose}>
               <Ionicons name="close" size={24} color={Colors.light.text} />
             </TouchableOpacity>
@@ -68,7 +70,7 @@ export function SportPickerModal({
             <Ionicons name="search-outline" size={20} color={Colors.light.ink3} style={{ marginRight: 8 }} />
             <TextInput
               style={styles.modalSearchInput}
-              placeholder="Rechercher un sport..."
+              placeholder={t('sportPicker.searchPlaceholder')}
               value={searchQuery}
               onChangeText={setSearchQuery}
               placeholderTextColor={Colors.light.ink3}
@@ -96,8 +98,8 @@ export function SportPickerModal({
             ListEmptyComponent={
               <View style={styles.modalEmptyState}>
                 <Ionicons name="search-outline" size={40} color={Colors.light.ink3} style={{ marginBottom: Spacing.space12 }} />
-                <Text style={styles.modalEmptyTitle}>Aucun sport trouvé</Text>
-                <Text style={styles.modalEmptySubtitle}>Essayez de rechercher un autre mot-clé ou vérifiez l&apos;orthographe.</Text>
+                <Text style={styles.modalEmptyTitle}>{t('sportPicker.emptyTitle')}</Text>
+                <Text style={styles.modalEmptySubtitle}>{t('sportPicker.emptySubtitle')}</Text>
               </View>
             }
           />

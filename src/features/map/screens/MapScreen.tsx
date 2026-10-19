@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ClubEventRow } from '@/components/ui/club-event-row';
+import { ClubEventRow } from '@/features/clubs/components';
 import { AccentColors, BackgroundThemes, Colors, Spacing, Typography } from '@/constants/theme';
 import { formatTime, getDayLabel } from '@/core/utils/locale';
 import { getOrganizerDisplay } from '@/core/utils/user';
@@ -15,10 +15,12 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { EventItemResponse } from '@/features/events/api/events.api';
 import { useEventsList } from '@/features/events/hooks/useEvents';
 import { ProfileApi } from '@/features/profile/api/profile.api';
+import { useTranslation } from 'react-i18next';
 
 const { height } = Dimensions.get('window');
 
 export function MapScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { refreshUser } = useAuth();
@@ -148,16 +150,18 @@ export function MapScreen() {
         <View style={styles.sheetHeader}>
           <View>
             <Text style={styles.sheetTitle}>
-              {activeEventId ? 'Événement sélectionné' : 'Autour de toi'}
+              {activeEventId ? t('map.selectedEvent') : t('map.aroundYou')}
             </Text>
             {activeEventId && (
               <TouchableOpacity onPress={() => setActiveEventId(null)} style={styles.clearSelectionBtn}>
-                <Text style={styles.clearSelectionText}>Afficher tout</Text>
+                <Text style={styles.clearSelectionText}>{t('map.showAll')}</Text>
               </TouchableOpacity>
             )}
           </View>
           <Text style={styles.sheetCount}>
-            {events.length} {events.length > 1 ? 'ÉVÉNEMENTS' : 'ÉVÉNEMENT'}
+            {events.length > 1
+              ? t('map.eventsCount', { count: events.length })
+              : t('map.eventsCountSingle', { count: events.length })}
           </Text>
         </View>
 
@@ -191,7 +195,7 @@ export function MapScreen() {
           {events.length === 0 && !isLoadingEvents && (
             <View style={styles.emptyContainer}>
               <Ionicons name="calendar-outline" size={48} color={Colors.light.ink3} style={{ marginBottom: 12 }} />
-              <Text style={styles.emptyText}>Aucun événement sportif disponible.</Text>
+              <Text style={styles.emptyText}>{t('map.noEventsAvailable')}</Text>
             </View>
           )}
         </ScrollView>
