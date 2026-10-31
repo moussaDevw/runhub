@@ -8,7 +8,7 @@ import { Redirect } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 export default function IndexRoute() {
-  const { session, isLoading } = useAuth();
+  const { session, user, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -20,6 +20,9 @@ export default function IndexRoute() {
 
   // If user has an active session, redirect to the explorer tab
   if (session) {
+    if (user && !user.onboardingCompleted) {
+      return <Redirect href="/onboarding" />;
+    }
     return <Redirect href="/(tabs)/explorer" />;
   }
 

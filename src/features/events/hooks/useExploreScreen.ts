@@ -100,6 +100,7 @@ export function useExploreScreen() {
 
     // Data
     userInitials,
+    userAvatarUrl: user?.avatarUrl,
     unreadNotificationsCount,
     sportsList,
     events,

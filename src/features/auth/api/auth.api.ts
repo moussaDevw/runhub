@@ -48,6 +48,37 @@ export const AuthApi = {
   },
 
   /**
+   * Demande l'envoi d'un code OTP à 6 chiffres par e-mail.
+   */
+  async sendEmailOtp(email: string): Promise<{ message: string; expiresInSeconds?: number }> {
+    return apiClient<{ message: string; expiresInSeconds?: number }>('/auth/email/send-code', {
+      method: 'POST',
+      body: { email },
+      skipAuth: true,
+    });
+  },
+
+  /**
+   * Vérifie le code OTP à 6 chiffres et connecte / crée le compte utilisateur.
+   */
+  async verifyEmailOtp(email: string, code: string): Promise<VerifyOtpResponse> {
+    const res = await apiClient<any>('/auth/email/verify-code', {
+      method: 'POST',
+      body: { email, code },
+      skipAuth: true,
+    });
+
+    const accessToken = res.accessToken || res.access_token || res.token;
+    const refreshToken = res.refreshToken || res.refresh_token || accessToken;
+
+    if (accessToken) {
+      await TokenStorage.saveTokens(accessToken, refreshToken);
+    }
+
+    return res as VerifyOtpResponse;
+  },
+
+  /**
    * Récupère le profil de l'utilisateur connecté via le token sauvegardé.
    */
   async getMe(): Promise<User> {

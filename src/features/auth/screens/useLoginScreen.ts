@@ -1,7 +1,9 @@
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, Platform } from 'react-native';
+import { AuthApi } from '../api/auth.api';
 import { useAuth } from '../context/AuthContext';
 
 // Chargement conditionnel du module Apple (non dispo hors iOS natif)
@@ -12,19 +14,114 @@ try {
   AppleAuthModule = null;
 }
 
-export type AuthProvider = 'apple' | 'google';
+export type AuthProvider = 'apple' | 'google' | 'email';
+export type LoginStep = 'oauth' | 'otp';
 
 export function useLoginScreen() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { t } = useTranslation();
+  const { login, loginWithEmailOtp } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [loadingProvider, setLoadingProvider] = useState<AuthProvider | null>(null);
 
+  // Flux Email OTP
+  const [step, setStep] = useState<LoginStep>('oauth');
+  const [email, setEmail] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [resendCountdown, setResendCountdown] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Décompte de renvoi de code
+  useEffect(() => {
+    if (resendCountdown > 0) {
+      timerRef.current = setTimeout(() => {
+        setResendCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [resendCountdown]);
+
+  // Validation email basique
+  const isValidEmail = (val: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
+  };
+
+  // ─── Envoi du code OTP Email ───────────────────────────────────────────────
+
+  const handleSendEmailOtp = async () => {
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail || !isValidEmail(trimmedEmail)) {
+      setEmailError(t('auth.invalidEmail'));
+      return;
+    }
+
+    setEmailError(null);
+    setOtpError(null);
+    setLoading(true);
+    setLoadingProvider('email');
+
+    try {
+      await AuthApi.sendEmailOtp(trimmedEmail);
+      setStep('otp');
+      setResendCountdown(45);
+    } catch (err: any) {
+      const msg = err?.message || 'Impossible d\'envoyer le code. Veuillez réessayer.';
+      setEmailError(msg);
+      Alert.alert('Erreur', msg);
+    } finally {
+      setLoading(false);
+      setLoadingProvider(null);
+    }
+  };
+
+  // ─── Vérification du code OTP Email ─────────────────────────────────────────
+
+  const handleVerifyEmailOtp = async (codeToVerify?: string) => {
+    const code = (codeToVerify || otpCode).trim();
+    if (code.length !== 6) {
+      setOtpError(t('auth.codeRequired'));
+      return;
+    }
+
+    setOtpError(null);
+    setLoading(true);
+    setLoadingProvider('email');
+
+    try {
+      await loginWithEmailOtp(email.trim().toLowerCase(), code);
+    } catch (err: any) {
+      const msg = err?.message || 'Code invalide ou expiré.';
+      setOtpError(msg);
+      Alert.alert('Erreur de validation', msg);
+    } finally {
+      setLoading(false);
+      setLoadingProvider(null);
+    }
+  };
+
+  // ─── Renvoyer le code OTP ───────────────────────────────────────────────────
+
+  const handleResendOtp = async () => {
+    if (resendCountdown > 0 || loading) return;
+    await handleSendEmailOtp();
+  };
+
+  // ─── Modifier l'adresse e-mail ──────────────────────────────────────────────
+
+  const handleChangeEmail = () => {
+    setStep('oauth');
+    setOtpCode('');
+    setOtpError(null);
+  };
+
   // ─── Google ───────────────────────────────────────────────────────────────
 
   const handleGoogleSignIn = async () => {
-    // 1. Détection de l'environnement Expo Go
     const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
     if (isExpoGo) {
       Alert.alert(
@@ -42,7 +139,6 @@ export function useLoginScreen() {
       return;
     }
 
-    // 2. Chargement du module natif Nitro
     let nitroSignin: typeof import('react-native-nitro-google-signin') | null = null;
     try {
       nitroSignin = require('react-native-nitro-google-signin');
@@ -78,33 +174,25 @@ export function useLoginScreen() {
       setLoading(true);
       setLoadingProvider('google');
 
-      // 3. Validation Google Play Services (Android uniquement)
       await GoogleOneTapSignIn.checkPlayServices(true);
-
-      // 4. Configuration avec le Web Client ID du projet GCP / Firebase
       GoogleOneTapSignIn.configure({
         webClientId,
       });
 
-      // 5. Tentative de One Tap sign-in (comptes autorisés / session enregistrée)
       let response = await GoogleOneTapSignIn.signIn();
 
-      // 6. Si aucun compte mémorisé, proposer la création / choix interactif de compte
       if (isNoSavedCredentialFoundResponse(response)) {
         response = await GoogleOneTapSignIn.createAccount();
       }
 
-      // 7. Si toujours sans résultat, afficher la boîte de dialogue explicite
       if (isNoSavedCredentialFoundResponse(response)) {
         response = await GoogleOneTapSignIn.presentExplicitSignIn();
       }
 
-      // 8. Annulation utilisateur (fermeture de la modale sans sélection)
       if (isCancelledResponse(response)) {
         return;
       }
 
-      // 9. Vérification du succès
       if (!isSuccessResponse(response)) {
         return;
       }
@@ -114,8 +202,6 @@ export function useLoginScreen() {
         throw new Error("Aucun jeton d'identité (idToken) retourné par Google.");
       }
 
-      // 10. Authentification auprès de l'API backend Jump-In
-      // La redirection vers les tabs est gérée par Stack.Protected (_layout.tsx)
       await login('google', idToken);
     } catch (err: any) {
       if (isErrorWithCode(err) && err.code === statusCodes.SIGN_IN_CANCELLED) {
@@ -182,11 +268,29 @@ export function useLoginScreen() {
 
   // ─── Navigation ───────────────────────────────────────────────────────────
 
-  const handleBack = () => router.back();
+  const handleBack = () => {
+    if (step === 'otp') {
+      handleChangeEmail();
+    } else {
+      router.back();
+    }
+  };
 
   return {
     loading,
     loadingProvider,
+    step,
+    email,
+    setEmail,
+    otpCode,
+    setOtpCode,
+    emailError,
+    otpError,
+    resendCountdown,
+    handleSendEmailOtp,
+    handleVerifyEmailOtp,
+    handleResendOtp,
+    handleChangeEmail,
     handleGoogleSignIn,
     handleAppleSignIn,
     handleBack,

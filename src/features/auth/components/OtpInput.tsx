@@ -7,22 +7,33 @@ interface OtpInputProps {
   onChangeCode: (code: string) => void;
   length?: number;
   error?: string;
+  label?: string;
+  disabled?: boolean;
 }
 
-export function OtpInput({ value, onChangeCode, length = 6, error }: OtpInputProps) {
+export function OtpInput({
+  value,
+  onChangeCode,
+  length = 6,
+  error,
+  label = 'CODE DE VÉRIFICATION',
+  disabled = false,
+}: OtpInputProps) {
   const inputRef = useRef<TextInputInstance>(null);
 
   const handlePress = () => {
-    inputRef.current?.focus();
+    if (!disabled) {
+      inputRef.current?.focus();
+    }
   };
 
   const digits = value.split('');
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>CODE DE VÉRIFICATION</Text>
+      {label ? <Text style={styles.label}>{label}</Text> : null}
       
-      <Pressable style={styles.boxesContainer} onPress={handlePress}>
+      <Pressable style={styles.boxesContainer} onPress={handlePress} disabled={disabled}>
         {Array.from({ length }).map((_, index) => {
           const char = digits[index] || '';
           const isCurrent = index === value.length && value.length < length;
@@ -34,6 +45,7 @@ export function OtpInput({ value, onChangeCode, length = 6, error }: OtpInputPro
                 styles.box,
                 isCurrent && styles.boxActive,
                 error ? styles.boxError : null,
+                disabled && styles.boxDisabled,
               ]}
             >
               <Text style={styles.char}>{char}</Text>
@@ -49,7 +61,10 @@ export function OtpInput({ value, onChangeCode, length = 6, error }: OtpInputPro
         value={value}
         onChangeText={(text) => onChangeCode(text.replace(/[^0-9]/g, '').slice(0, length))}
         keyboardType="number-pad"
+        textContentType="oneTimeCode"
+        autoComplete="one-time-code"
         maxLength={length}
+        editable={!disabled}
         autoFocus
       />
 
@@ -94,6 +109,9 @@ const styles = StyleSheet.create({
   },
   boxError: {
     borderColor: '#C8392F',
+  },
+  boxDisabled: {
+    opacity: 0.5,
   },
   char: {
     fontFamily: Typography.display.fontFamily,

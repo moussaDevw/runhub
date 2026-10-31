@@ -39,4 +39,13 @@ export const ProfileApi = {
       body: payload,
     });
   },
+
+  /**
+   * Supprimer définitivement le compte utilisateur et toutes ses données (RGPD / App Store).
+   */
+  async deleteAccount(): Promise<{ success: boolean; message?: string }> {
+    return apiClient('/users/me', {
+      method: 'DELETE',
+    });
+  },
 };

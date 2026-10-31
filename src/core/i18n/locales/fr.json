@@ -109,6 +109,11 @@
     "termsAndPrivacy": "Conditions & confidentialité",
     "logout": "Se déconnecter",
     "logoutConfirm": "Es-tu sûr de vouloir te déconnecter ?",
+    "deleteAccount": "Supprimer le compte",
+    "deleteAccountDesc": "Supprime définitivement votre compte et toutes vos données",
+    "deleteAccountTitle": "Supprimer définitivement mon compte ?",
+    "deleteAccountConfirm": "Cette action est irréversible. L'ensemble de vos données (activités, participations, messages, statistiques, clubs) sera définitivement supprimé de nos serveurs.",
+    "deleteAccountButton": "Supprimer mon compte",
     "minSportsError": "Vous devez garder au moins 2 sports favoris pour personnaliser votre expérience."
   },
   "editProfile": {
@@ -472,5 +477,28 @@
       "disconnectSync": "Déconnecter la synchronisation",
       "authorizeProvider": "Autoriser {{provider}}"
     }
+  },
+  "auth": {
+    "superTitle": "COMMUNAUTÉ SPORTIVE",
+    "title": "Connecte-toi en\nquelques secondes",
+    "subtitle": "Choisis ton mode de connexion sécurisé. Aucune publication sur tes réseaux.",
+    "continueWithApple": "Continuer avec Apple",
+    "continueWithGoogle": "Continuer avec Google",
+    "orEmail": "OU AVEC TON E-MAIL",
+    "emailPlaceholder": "exemple@email.com",
+    "continueWithEmail": "Continuer avec un e-mail",
+    "sendCode": "Recevoir mon code",
+    "sending": "Envoi en cours...",
+    "enterOtpTitle": "Code de vérification",
+    "enterOtpSubtitle": "Saisis le code à 6 chiffres envoyé à {{email}}",
+    "otpLabel": "CODE DE VÉRIFICATION",
+    "verifyAndLogin": "Vérifier & se connecter",
+    "verifying": "Vérification...",
+    "resendCode": "Renvoyer le code",
+    "resendIn": "Renvoyer dans {{seconds}}s",
+    "changeEmail": "Modifier l'adresse e-mail",
+    "invalidEmail": "Veuillez saisir une adresse e-mail valide.",
+    "codeRequired": "Veuillez saisir le code à 6 chiffres.",
+    "codeSentSuccess": "Code envoyé ! Vérifie ta boîte de réception."
   }
 }

@@ -102,6 +102,11 @@
     "termsAndPrivacy": "Terms & privacy",
     "logout": "Log out",
     "logoutConfirm": "Are you sure you want to log out?",
+    "deleteAccount": "Delete account",
+    "deleteAccountDesc": "Permanently deletes your account and all your data",
+    "deleteAccountTitle": "Permanently delete your account?",
+    "deleteAccountConfirm": "This action cannot be undone. All of your data (activities, entries, messages, statistics, clubs) will be permanently erased from our servers.",
+    "deleteAccountButton": "Delete my account",
     "minSportsError": "You must keep at least 2 favorite sports to customize your experience."
   },
   "editProfile": {
@@ -465,5 +470,28 @@
       "disconnectSync": "Disconnect synchronization",
       "authorizeProvider": "Authorize {{provider}}"
     }
+  },
+  "auth": {
+    "superTitle": "SPORTS COMMUNITY",
+    "title": "Sign in in\na few seconds",
+    "subtitle": "Choose your secure sign-in method. No posts to your feeds.",
+    "continueWithApple": "Continue with Apple",
+    "continueWithGoogle": "Continue with Google",
+    "orEmail": "OR WITH YOUR EMAIL",
+    "emailPlaceholder": "example@email.com",
+    "continueWithEmail": "Continue with email",
+    "sendCode": "Get my code",
+    "sending": "Sending...",
+    "enterOtpTitle": "Verification code",
+    "enterOtpSubtitle": "Enter the 6-digit code sent to {{email}}",
+    "otpLabel": "VERIFICATION CODE",
+    "verifyAndLogin": "Verify & sign in",
+    "verifying": "Verifying...",
+    "resendCode": "Resend code",
+    "resendIn": "Resend in {{seconds}}s",
+    "changeEmail": "Change email address",
+    "invalidEmail": "Please enter a valid email address.",
+    "codeRequired": "Please enter the 6-digit code.",
+    "codeSentSuccess": "Code sent! Check your inbox."
   }
 }
