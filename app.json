@@ -30,6 +30,7 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.CAMERA",
+        "android.permission.POST_NOTIFICATIONS",
         "android.permission.ACTIVITY_RECOGNITION",
         "android.permission.health.READ_DISTANCE",
         "android.permission.health.READ_STEPS",
@@ -63,7 +64,15 @@
       "expo-secure-store",
       "@maplibre/maplibre-react-native",
       "@react-native-community/datetimepicker",
-      "react-native-nitro-google-signin"
+      "react-native-nitro-google-signin",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#e10600"
+        }
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

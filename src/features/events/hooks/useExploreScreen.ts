@@ -1,12 +1,12 @@
+import { AppliedFilters } from '@/components/ui/hooks/useFilterModalNative';
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { useClubsList } from '@/features/clubs/hooks/useClubsList';
+import { useUnreadNotificationsCount } from '@/features/notifications';
 import { useAllSports } from '@/features/sports/hooks/useSports';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useEventsList } from './useEvents';
-import { useClubsList } from '@/features/clubs/hooks/useClubsList';
-import { AppliedFilters } from '@/components/ui/hooks/useFilterModalNative';
-import { useUnreadNotificationsCount } from '@/features/notifications';
 
 export function useExploreScreen() {
   const [filterVisible, setFilterVisible] = useState(false);
@@ -70,7 +70,13 @@ export function useExploreScreen() {
   const handleNavigateProfile = () => router.push('/profil');
   const handleNavigateFavorites = () => router.push('/favorites' as any);
   const handleNavigateNotifications = () => router.push('/notifications' as any);
-  const handleNavigateCreate = () => router.push('/(tabs)/creer' as any);
+  const handleNavigateCreate = () => {
+    if (activeTab === 'clubs') {
+      router.push('/club/create' as any);
+    } else {
+      router.push('/event/create' as any);
+    }
+  };
   const handleNavigateEvent = (id: string) => router.push(`/event/${id}` as any);
   const handleNavigateClub = (id: string) => router.push(`/club/${id}` as any);
 

@@ -31,9 +31,9 @@ export const ProfileApi = {
   },
 
   /**
-   * Mettre à jour les paramètres (notifications, mode éco-data)
+   * Mettre à jour les paramètres (notifications, mode éco-data, langue)
    */
-  async updateSettings(payload: { notifEnabled?: boolean; ecoData?: boolean }): Promise<Partial<User>> {
+  async updateSettings(payload: { notifEnabled?: boolean; ecoData?: boolean; locale?: string }): Promise<Partial<User>> {
     return apiClient('/users/me/settings', {
       method: 'PATCH',
       body: payload,

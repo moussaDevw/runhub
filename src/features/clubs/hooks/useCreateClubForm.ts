@@ -10,6 +10,7 @@ export function useCreateClubForm() {
   const [name, setName] = useState('');
   const [handle, setHandle] = useState('');
   const [bio, setBio] = useState('');
+  const [whatsappGroupUrl, setWhatsappGroupUrl] = useState('');
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   
@@ -55,6 +56,7 @@ export function useCreateClubForm() {
       name,
       handle,
       bio,
+      whatsappGroupUrl: whatsappGroupUrl.trim() || undefined,
       coverUrl: coverUrl || undefined,
       logoUrl: logoUrl || undefined,
       baseName: baseName || undefined,
@@ -75,6 +77,7 @@ export function useCreateClubForm() {
       name,
       handle,
       bio,
+      whatsappGroupUrl,
       coverUrl,
       logoUrl,
       isLocationModalVisible,
@@ -85,6 +88,7 @@ export function useCreateClubForm() {
       setName,
       setHandle: handleHandleChange,
       setBio,
+      setWhatsappGroupUrl,
       setIsLocationModalVisible,
       handleLocationSelect,
       handleSelectCover,

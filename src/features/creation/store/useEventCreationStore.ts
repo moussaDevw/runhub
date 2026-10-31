@@ -20,6 +20,7 @@ export interface EventCreationState {
   country?: string;
   coverUrl: string | null;
   coverKey: string | null;
+  whatsappGroupUrl?: string;
   updateField: <K extends keyof Omit<EventCreationState, 'updateField' | 'resetStore'>>(
     key: K,
     value: EventCreationState[K]
@@ -51,6 +52,7 @@ const getInitialState = () => {
     country: undefined,
     coverUrl: null,
     coverKey: null,
+    whatsappGroupUrl: '',
   };
 };
 

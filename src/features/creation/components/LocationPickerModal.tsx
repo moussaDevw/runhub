@@ -322,7 +322,7 @@ export function LocationPickerModal({
                   <View style={styles.emptySuggestionsContainer}>
                     <Text style={styles.emptySuggestionsText}>{t('locationPicker.empty')}</Text>
                   </View>
-                ) : null
+                ) : undefined
               }
             />
           )}

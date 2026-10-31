@@ -1,11 +1,11 @@
+import { BottomTabBar } from '@/components/layout';
 import { AccentColors } from '@/constants/theme';
 import { useCreateModal } from '@/features/creation/store/useCreateModal';
 import { useTheme } from '@/hooks/use-theme';
-import { BottomTabBar } from '@/components/layout';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Tabs } from 'expo-router';
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
-import React from 'react';
+import { NativeTabs } from 'expo-router/native-tabs';
 import { useTranslation } from 'react-i18next';
 import { Platform } from 'react-native';
 
@@ -30,20 +30,7 @@ export default function TabsLayout() {
               <Ionicons
                 name={focused ? 'compass' : 'compass-outline'}
                 size={24}
-                color={color}
-              />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="carte"
-          options={{
-            title: t('tabs.map'),
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? 'map' : 'map-outline'}
-                size={24}
-                color={color}
+                color={color as string}
               />
             ),
           }}
@@ -56,7 +43,20 @@ export default function TabsLayout() {
               <Ionicons
                 name={focused ? 'add-circle' : 'add-circle-outline'}
                 size={25}
-                color={color}
+                color={color as string}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="courir"
+          options={{
+            title: t('tabs.run'),
+            tabBarIcon: ({ color }) => (
+              <MaterialIcons
+                name="directions-run"
+                size={25}
+                color={color as string}
               />
             ),
           }}
@@ -64,27 +64,13 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="agenda"
           options={{
-            title: t('tabs.agenda'),
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? 'calendar' : 'calendar-outline'}
-                size={24}
-                color={color}
-              />
-            ),
+            href: null,
           }}
         />
         <Tabs.Screen
-          name="profil"
+          name="carte"
           options={{
-            title: t('tabs.profile'),
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? 'person' : 'person-outline'}
-                size={24}
-                color={color}
-              />
-            ),
+            href: null,
           }}
         />
         <Tabs.Screen
@@ -131,14 +117,6 @@ export default function TabsLayout() {
         />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="carte">
-        <NativeTabs.Trigger.Label>{t('tabs.map')}</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          sf={{ default: 'map', selected: 'map.fill' }}
-          md={{ default: 'map', selected: 'map' }}
-        />
-      </NativeTabs.Trigger>
-
       <NativeTabs.Trigger name="creer" disabled>
         <NativeTabs.Trigger.Label>{t('tabs.create')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
@@ -147,19 +125,11 @@ export default function TabsLayout() {
         />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="agenda">
-        <NativeTabs.Trigger.Label>{t('tabs.agenda')}</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger name="courir">
+        <NativeTabs.Trigger.Label>{t('tabs.run')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          sf={{ default: 'calendar', selected: 'calendar' }}
-          md={{ default: 'calendar_today', selected: 'calendar_today' }}
-        />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="profil">
-        <NativeTabs.Trigger.Label>{t('tabs.profile')}</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          sf={{ default: 'person', selected: 'person.fill' }}
-          md={{ default: 'person_outline', selected: 'person' }}
+          sf={{ default: 'figure.run', selected: 'figure.run' }}
+          md={{ default: 'directions_run', selected: 'directions_run' }}
         />
       </NativeTabs.Trigger>
     </NativeTabs>

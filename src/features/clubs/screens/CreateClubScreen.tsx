@@ -75,6 +75,15 @@ export function CreateClubScreen() {
         multiline
       />
 
+      <FormInput
+        label="GROUPE WHATSAPP (OPTIONNEL)"
+        value={state.whatsappGroupUrl}
+        onChangeText={actions.setWhatsappGroupUrl}
+        placeholder="https://chat.whatsapp.com/..."
+        autoCapitalize="none"
+        keyboardType="url"
+      />
+
       <Spacer size="space32" />
       
       <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('createClub.locationTitle')}</Text>

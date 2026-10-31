@@ -45,7 +45,7 @@ export function useCheckInListScreen() {
 
   const handleGoToEdit = () => {
     if (eventId) {
-      router.push(`/(tabs)/creer?id=${eventId}` as any);
+      router.push(`/event/create?id=${eventId}` as any);
     }
   };
 

@@ -2,6 +2,7 @@
   "tabs": {
     "explore": "Explorer",
     "map": "Carte",
+    "run": "Courir",
     "create": "Créer",
     "agenda": "Agenda",
     "profile": "Profil"
@@ -68,9 +69,15 @@
     "filterWeekend": "Ce week-end",
     "filterWeek": "Cette semaine",
     "filterMonth": "Ce mois-ci",
-    "filterAll": "Tout"
+    "filterAll": "Tout",
+    "toggleMap": "Carte",
+    "toggleList": "Liste",
+    "aroundYou": "Autour de vous",
+    "noCoords": "Aucun événement avec coordonnées"
   },
   "profile": {
+    "tabAgenda": "Mon agenda",
+    "tabSettings": "Clubs & Réglages",
     "mySports": "MES SPORTS",
     "modify": "Modifier",
     "noSportsSelected": "Aucun sport sélectionné",
@@ -100,7 +107,9 @@
     "support": "SUPPORT",
     "helpAndContact": "Aide & contact",
     "termsAndPrivacy": "Conditions & confidentialité",
-    "logout": "Se déconnecter"
+    "logout": "Se déconnecter",
+    "logoutConfirm": "Es-tu sûr de vouloir te déconnecter ?",
+    "minSportsError": "Vous devez garder au moins 2 sports favoris pour personnaliser votre expérience."
   },
   "editProfile": {
     "title": "Éditer le profil",
@@ -175,7 +184,10 @@
     "close": "Fermer",
     "save": "Enregistrer",
     "back": "Retour",
-    "modify": "Modifier"
+    "modify": "Modifier",
+    "error": "Erreur",
+    "actionImpossible": "Action impossible",
+    "you": "Vous"
   },
   "manageEvents": {
     "title": "Mes events créés",
@@ -185,6 +197,7 @@
     "verified": "Vérifié",
     "noDescription": "Aucune description fournie pour ce club.",
     "membersCount": "{{count}} membres",
+    "membersCount_one": "{{count}} membre",
     "eventsCount": "{{count}} événements",
     "members": "membres",
     "events": "events",
@@ -197,13 +210,27 @@
     "createEvent": "Créer un événement",
     "createEventSub": "Publier une sortie au nom du club",
     "leave": "Quitter le club",
-    "requestSent": "Demande envoyée",
+    "leaveConfirm": "Es-tu sûr de vouloir quitter ce club ?",
+    "cancelRequest": "Annuler la demande",
+    "cancelRequestConfirm": "Souhaites-tu annuler ta demande d'adhésion à ce club ?",
     "join": "Rejoindre le club",
     "subscribed": "✓ Abonné",
     "follow": "Suivre le club",
     "eventsTitle": "Événements du club",
     "noEvents": "Aucun événement prévu pour le moment.",
-    "organizeFirstEvent": "+ Organiser la première sortie"
+    "organizeFirstEvent": "+ Organiser la première sortie",
+    "membersTitle": "Membres du club",
+    "searchMembers": "Rechercher un membre...",
+    "noMembers": "Aucun membre pour le moment",
+    "noMembersFound": "Aucun membre trouvé",
+    "roleOwner": "Propriétaire",
+    "roleAdmin": "Admin",
+    "roleMember": "Membre",
+    "removeMember": "Retirer du club",
+    "removeMemberConfirm": "Es-tu sûr de vouloir retirer {{name}} du club ?",
+    "manageMembers": "Membres du club",
+    "manageMembersSub": "Voir la liste des membres",
+    "viewAll": "Voir tout"
   },
   "favorites": {
     "title": "Mes favoris",
@@ -266,7 +293,17 @@
   },
   "notifications": {
     "title": "Notifications",
-    "readAll": "TOUT LIRE"
+    "readAll": "TOUT LIRE",
+    "emptyTitle": "Aucune notification",
+    "emptySubtitle": "Vous serez notifié des nouvelles inscriptions, messages et rappels.",
+    "clubJoinRequest": "souhaite rejoindre votre club « {{clubName}} »",
+    "clubJoinApproved": "Vous êtes maintenant membre du club « {{clubName}} »",
+    "clubJoinRejected": "Votre demande pour rejoindre le club « {{clubName}} » a été refusée",
+    "clubEventCreated": "Le club {{clubName}} organise « {{eventTitle}} »",
+    "sportEventCreated": "Nouvel événement {{sportName}} : « {{eventTitle}} »",
+    "eventRegistration": "a rejoint votre événement « {{eventTitle}} »",
+    "eventCancellation": "a annulé sa participation à « {{eventTitle}} »",
+    "spotAvailable": "Une place est de nouveau disponible pour « {{eventTitle}} »"
   },
   "map": {
     "selectedEvent": "Événement sélectionné",
@@ -362,5 +399,78 @@
     "joinedDiscussion": "Tu as rejoint la discussion - {{count}} membre(s)",
     "participantsCount": "{{count}} participant(s)",
     "organizer": "Organisateur"
+  },
+  "tracker": {
+    "myProfile": "Mon profil",
+    "title": "Courir",
+    "subtitle": "Suivi GPS & performances",
+    "launchLiveTracker": "Lancer le live tracker",
+    "go": "GO",
+    "newSessionBadge": "NOUVELLE SÉANCE",
+    "readyTitle": "Prêt pour votre sortie ?",
+    "readyDescription": "Sélectionnez votre discipline et enregistrez votre tracé GPS avec métriques en temps réel.",
+    "startSession": "Démarrer ma {{sport}}",
+    "startBySport": {
+      "running": "Démarrer ma course",
+      "walking": "Démarrer ma marche",
+      "trail": "Démarrer mon trail",
+      "cycling": "Démarrer mon vélo"
+    },
+    "sports": {
+      "running": "Course",
+      "walking": "Marche",
+      "trail": "Trail",
+      "cycling": "Vélo"
+    },
+    "myStats": "Mes statistiques",
+    "km": "km",
+    "thisWeek": "Cette semaine",
+    "thisMonth": "Ce mois",
+    "totalCumulative": "Total cumulé",
+    "recentActivities": "Activités récentes",
+    "emptyTitle": "Aucune activité enregistrée",
+    "emptySubtitle": "Vos sorties enregistrées en direct apparaîtront ici avec vos allures, distances et tracés GPS.",
+    "startFirstSession": "Démarrer ma 1ère séance",
+    "hud": {
+      "kilometers": "KILOMÈTRES",
+      "time": "TEMPS",
+      "avgPace": "ALLURE MOY.",
+      "calories": "CALORIES",
+      "elevationGain": "+{{meters}} m de dénivelé"
+    },
+    "detail": {
+      "duration": "DURÉE",
+      "elevation": "DÉNIVELÉ",
+      "gpsRoute": "TRACÉ GPS",
+      "personalNotes": "NOTES PERSONNELLES",
+      "close": "Fermer"
+    }
+  },
+  "health": {
+    "appleHealth": "Apple Santé",
+    "healthConnect": "Santé Connect",
+    "googleHealthConnect": "Google Santé Connect",
+    "syncKilometers": "Synchroniser vos kilomètres",
+    "connectSubtitle": "Connectez {{provider}} pour suivre vos progrès",
+    "connectButton": "Connecter {{provider}}",
+    "runningStats": "Statistiques de course",
+    "syncedWith": "Synchronisé avec {{provider}}",
+    "km": "km",
+    "steps": "pas",
+    "thisWeek": "Cette semaine",
+    "thisMonth": "Ce mois",
+    "today": "Aujourd'hui",
+    "lastRun": "Dernier run : {{distance}} km en {{duration}} min ({{pace}})",
+    "modal": {
+      "connectedTo": "Connecté à {{provider}}",
+      "connectTo": "Connecter {{provider}}",
+      "connectedDescription": "Vos kilomètres et entraînements sont automatiquement synchronisés avec RunHub.",
+      "disconnectedDescription": "Autorisez RunHub à lire vos données de course (distance, pas, fréquence cardiaque) pour suivre automatiquement vos progrès et vos défis.",
+      "benefitWeeklyKm": "Calcul automatique de vos km hebdomadaires",
+      "benefitClubChallenges": "Progression dans les défis de vos clubs",
+      "benefitPrivacy": "Données privées et sécurisées sur votre appareil",
+      "disconnectSync": "Déconnecter la synchronisation",
+      "authorizeProvider": "Autoriser {{provider}}"
+    }
   }
 }

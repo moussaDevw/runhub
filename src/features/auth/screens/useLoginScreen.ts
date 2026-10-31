@@ -115,8 +115,8 @@ export function useLoginScreen() {
       }
 
       // 10. Authentification auprès de l'API backend Jump-In
+      // La redirection vers les tabs est gérée par Stack.Protected (_layout.tsx)
       await login('google', idToken);
-      router.replace('/(tabs)');
     } catch (err: any) {
       if (isErrorWithCode(err) && err.code === statusCodes.SIGN_IN_CANCELLED) {
         return;
@@ -169,7 +169,6 @@ export function useLoginScreen() {
       const lastName = credential.fullName?.familyName || undefined;
 
       await login('apple', credential.identityToken, firstName, lastName);
-      router.replace('/(tabs)');
     } catch (e) {
       const err = e as { code?: string; message?: string };
       if (err?.code !== 'ERR_REQUEST_CANCELED') {

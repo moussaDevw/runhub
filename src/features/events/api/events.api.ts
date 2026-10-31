@@ -6,6 +6,7 @@ export interface CreateEventPayload {
   sportId: string;
   clubId?: string;
   coverUrl?: string;
+  whatsappGroupUrl?: string;
   startsAt: string; // ISO String
   endsAt?: string; // ISO String
   venueName?: string;
@@ -27,6 +28,7 @@ export interface EventResponse {
   title: string;
   description: string | null;
   coverUrl?: string | null;
+  whatsappGroupUrl?: string | null;
   startsAt: string;
   endsAt: string | null;
   venueName: string | null;

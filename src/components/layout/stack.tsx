@@ -1,6 +1,5 @@
 import React, { ReactNode } from 'react';
 import {
-  FlexAlignType,
   StyleSheet,
   View,
   ViewProps,
@@ -15,7 +14,7 @@ export interface StackProps extends ViewProps {
   children?: ReactNode;
   direction?: 'row' | 'column' | 'row-reverse' | 'column-reverse';
   gap?: number | SpacingKey;
-  align?: FlexAlignType;
+  align?: ViewStyle['alignItems'];
   justify?:
     | 'flex-start'
     | 'flex-end'

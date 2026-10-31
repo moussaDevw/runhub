@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { View, Text, TextInput, StyleSheet, Pressable } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Pressable, type TextInputInstance } from 'react-native';
 import { Colors,  AccentColors, Spacing, Typography } from '@/constants/theme';
 
 interface OtpInputProps {
@@ -10,7 +10,7 @@ interface OtpInputProps {
 }
 
 export function OtpInput({ value, onChangeCode, length = 6, error }: OtpInputProps) {
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
 
   const handlePress = () => {
     inputRef.current?.focus();

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { Colors, Spacing, Typography, AccentColors } from '@/constants/theme';
 import { useHealthData } from '../hooks/useHealthData';
 
@@ -9,9 +10,10 @@ interface FitnessStatsCardProps {
 }
 
 export function FitnessStatsCard({ onPressConnect }: FitnessStatsCardProps) {
+  const { t } = useTranslation();
   const { data, isLoading, provider } = useHealthData();
 
-  const providerName = provider === 'apple_health' ? 'Apple Santé' : 'Santé Connect';
+  const providerName = provider === 'apple_health' ? t('health.appleHealth') : t('health.healthConnect');
   const providerIcon = provider === 'apple_health' ? 'heart-circle' : 'fitness';
 
   if (isLoading) {
@@ -30,8 +32,10 @@ export function FitnessStatsCard({ onPressConnect }: FitnessStatsCardProps) {
             <Ionicons name={providerIcon} size={24} color="#e04848" />
           </View>
           <View style={styles.headerTexts}>
-            <Text style={styles.cardTitle}>Synchroniser vos kilomètres</Text>
-            <Text style={styles.cardSubtitle}>Connectez {providerName} pour suivre vos progrès</Text>
+            <Text style={styles.cardTitle}>{t('health.syncKilometers')}</Text>
+            <Text style={styles.cardSubtitle}>
+              {t('health.connectSubtitle', { provider: providerName })}
+            </Text>
           </View>
         </View>
 
@@ -42,7 +46,9 @@ export function FitnessStatsCard({ onPressConnect }: FitnessStatsCardProps) {
           accessibilityRole="button"
         >
           <Ionicons name="link-outline" size={16} color="#ffffff" style={{ marginRight: 6 }} />
-          <Text style={styles.connectButtonText}>Connecter {providerName}</Text>
+          <Text style={styles.connectButtonText}>
+            {t('health.connectButton', { provider: providerName })}
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -55,8 +61,10 @@ export function FitnessStatsCard({ onPressConnect }: FitnessStatsCardProps) {
           <Ionicons name="checkmark-circle" size={20} color="#22a06b" />
         </View>
         <View style={styles.headerTexts}>
-          <Text style={styles.cardTitle}>Statistiques de course</Text>
-          <Text style={styles.cardSubtitle}>Synchronisé avec {providerName}</Text>
+          <Text style={styles.cardTitle}>{t('health.runningStats')}</Text>
+          <Text style={styles.cardSubtitle}>
+            {t('health.syncedWith', { provider: providerName })}
+          </Text>
         </View>
         <Ionicons name={providerIcon} size={22} color="#e04848" />
       </View>
@@ -65,24 +73,24 @@ export function FitnessStatsCard({ onPressConnect }: FitnessStatsCardProps) {
       <View style={styles.statsGrid}>
         <View style={styles.statBox}>
           <Text style={styles.statNumber}>{data.weeklyDistanceKm.toFixed(1)}</Text>
-          <Text style={styles.statUnit}>km</Text>
-          <Text style={styles.statLabel}>Cette semaine</Text>
+          <Text style={styles.statUnit}>{t('health.km')}</Text>
+          <Text style={styles.statLabel}>{t('health.thisWeek')}</Text>
         </View>
 
         <View style={styles.statDivider} />
 
         <View style={styles.statBox}>
           <Text style={styles.statNumber}>{data.monthlyDistanceKm.toFixed(1)}</Text>
-          <Text style={styles.statUnit}>km</Text>
-          <Text style={styles.statLabel}>Ce mois</Text>
+          <Text style={styles.statUnit}>{t('health.km')}</Text>
+          <Text style={styles.statLabel}>{t('health.thisMonth')}</Text>
         </View>
 
         <View style={styles.statDivider} />
 
         <View style={styles.statBox}>
           <Text style={styles.statNumber}>{data.todaySteps.toLocaleString()}</Text>
-          <Text style={styles.statUnit}>pas</Text>
-          <Text style={styles.statLabel}>Aujourd'hui</Text>
+          <Text style={styles.statUnit}>{t('health.steps')}</Text>
+          <Text style={styles.statLabel}>{t('health.today')}</Text>
         </View>
       </View>
 
@@ -91,7 +99,11 @@ export function FitnessStatsCard({ onPressConnect }: FitnessStatsCardProps) {
         <View style={styles.recentRunContainer}>
           <Ionicons name="walk-outline" size={16} color={Colors.light.ink3} />
           <Text style={styles.recentRunText}>
-            Dernier run : {data.recentWorkouts[0].distanceKm} km en {data.recentWorkouts[0].durationMinutes} min ({data.recentWorkouts[0].averagePace || '5:08 /km'})
+            {t('health.lastRun', {
+              distance: data.recentWorkouts[0].distanceKm,
+              duration: data.recentWorkouts[0].durationMinutes,
+              pace: data.recentWorkouts[0].averagePace || '5:08 /km',
+            })}
           </Text>
         </View>
       )}

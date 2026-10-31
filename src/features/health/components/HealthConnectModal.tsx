@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { Colors, Spacing, Typography, AccentColors } from '@/constants/theme';
 import { useHealthData } from '../hooks/useHealthData';
 
@@ -10,9 +11,11 @@ interface HealthConnectModalProps {
 }
 
 export function HealthConnectModal({ visible, onClose }: HealthConnectModalProps) {
+  const { t } = useTranslation();
   const { provider, isConnecting, connect, disconnect, data } = useHealthData();
 
-  const providerName = provider === 'apple_health' ? 'Apple Santé' : 'Google Santé Connect';
+  const providerName =
+    provider === 'apple_health' ? t('health.appleHealth') : t('health.googleHealthConnect');
   const isConnected = data?.isConnected;
 
   const handleToggleConnect = async () => {
@@ -43,27 +46,29 @@ export function HealthConnectModal({ visible, onClose }: HealthConnectModalProps
           </View>
 
           <Text style={styles.title}>
-            {isConnected ? `Connecté à ${providerName}` : `Connecter ${providerName}`}
+            {isConnected
+              ? t('health.modal.connectedTo', { provider: providerName })
+              : t('health.modal.connectTo', { provider: providerName })}
           </Text>
 
           <Text style={styles.description}>
             {isConnected
-              ? `Vos kilomètres et entraînements sont automatiquement synchronisés avec RunHub.`
-              : `Autorisez RunHub à lire vos données de course (distance, pas, fréquence cardiaque) pour suivre automatiquement vos progrès et vos défis.`}
+              ? t('health.modal.connectedDescription')
+              : t('health.modal.disconnectedDescription')}
           </Text>
 
           <View style={styles.benefitsList}>
             <View style={styles.benefitItem}>
               <Ionicons name="speedometer-outline" size={18} color={AccentColors.bissap} />
-              <Text style={styles.benefitText}>Calcul automatique de vos km hebdomadaires</Text>
+              <Text style={styles.benefitText}>{t('health.modal.benefitWeeklyKm')}</Text>
             </View>
             <View style={styles.benefitItem}>
               <Ionicons name="trophy-outline" size={18} color={AccentColors.bissap} />
-              <Text style={styles.benefitText}>Progression dans les défis de vos clubs</Text>
+              <Text style={styles.benefitText}>{t('health.modal.benefitClubChallenges')}</Text>
             </View>
             <View style={styles.benefitItem}>
               <Ionicons name="lock-closed-outline" size={18} color={AccentColors.bissap} />
-              <Text style={styles.benefitText}>Données privées et sécurisées sur votre appareil</Text>
+              <Text style={styles.benefitText}>{t('health.modal.benefitPrivacy')}</Text>
             </View>
           </View>
 
@@ -77,7 +82,9 @@ export function HealthConnectModal({ visible, onClose }: HealthConnectModalProps
               <ActivityIndicator color="#ffffff" />
             ) : (
               <Text style={styles.actionBtnText}>
-                {isConnected ? 'Déconnecter la synchronisation' : `Autoriser ${providerName}`}
+                {isConnected
+                  ? t('health.modal.disconnectSync')
+                  : t('health.modal.authorizeProvider', { provider: providerName })}
               </Text>
             )}
           </TouchableOpacity>

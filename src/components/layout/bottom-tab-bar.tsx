@@ -2,14 +2,15 @@ import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Tabs } from 'expo-router';
+import type { BottomTabBarProps } from 'expo-router/js-tabs';
 
 import { AccentColors } from '@/constants/theme';
 import { useCreateModal } from '@/features/creation/store/useCreateModal';
 import { useTheme } from '@/hooks/use-theme';
 
-export type BottomTabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>>[0];
+const ALLOWED_TABS = ['explorer', 'creer', 'courir'];
 
-export function BottomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+export function BottomTabBar({ state, descriptors, emitter, navigateToTab }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const { open } = useCreateModal();
@@ -23,19 +24,15 @@ export function BottomTabBar({ state, descriptors, navigation }: BottomTabBarPro
         backgroundColor: theme.cardBackground,
         borderTopWidth: StyleSheet.hairlineWidth,
         borderTopColor: theme.cardBorder,
-        height: 49 + bottomInset,
+        height: 52 + bottomInset,
         paddingBottom: bottomInset,
-        paddingTop: 4,
+        paddingTop: 6,
         elevation: 0,
       }}
     >
       {state.routes
-        .filter((route) => {
-          if (route.name === 'index') return false;
-          const options = descriptors[route.key]?.options;
-          if ((options as any)?.href === null) return false;
-          return true;
-        })
+        .filter((route) => ALLOWED_TABS.includes(route.name))
+        .sort((a, b) => ALLOWED_TABS.indexOf(a.name) - ALLOWED_TABS.indexOf(b.name))
         .map((route) => {
           const descriptor = descriptors[route.key];
           const options = descriptor?.options;
@@ -50,14 +47,14 @@ export function BottomTabBar({ state, descriptors, navigation }: BottomTabBarPro
               return;
             }
 
-            const event = navigation.emit({
+            const event = emitter.emit({
               type: 'tabPress',
               target: route.key,
               canPreventDefault: true,
             });
 
             if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name, route.params);
+              navigateToTab(route.key);
             }
           };
 
@@ -86,9 +83,9 @@ export function BottomTabBar({ state, descriptors, navigation }: BottomTabBarPro
               {options.tabBarIcon?.({ focused: isFocused, color, size: 24 })}
               <Text
                 style={{
-                  fontSize: 10,
+                  fontSize: 11,
                   marginTop: 2,
-                  fontWeight: isFocused ? '600' : '500',
+                  fontWeight: isFocused ? '700' : '500',
                   color,
                 }}
               >
