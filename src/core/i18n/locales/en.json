@@ -100,7 +100,9 @@
     "support": "SUPPORT",
     "helpAndContact": "Help & contact",
     "termsAndPrivacy": "Terms & privacy",
-    "logout": "Log out"
+    "logout": "Log out",
+    "logoutConfirm": "Are you sure you want to log out?",
+    "minSportsError": "You must keep at least 2 favorite sports to customize your experience."
   },
   "editProfile": {
     "title": "Edit Profile",
@@ -175,7 +177,10 @@
     "close": "Close",
     "save": "Save",
     "back": "Go back",
-    "modify": "Edit"
+    "modify": "Edit",
+    "error": "Error",
+    "actionImpossible": "Action impossible",
+    "you": "You"
   },
   "manageEvents": {
     "title": "My created events",
@@ -185,6 +190,7 @@
     "verified": "Verified",
     "noDescription": "No description provided for this club.",
     "membersCount": "{{count}} members",
+    "membersCount_one": "{{count}} member",
     "eventsCount": "{{count}} events",
     "members": "members",
     "events": "events",
@@ -197,13 +203,27 @@
     "createEvent": "Create an event",
     "createEventSub": "Publish an event on behalf of the club",
     "leave": "Leave club",
-    "requestSent": "Request sent",
+    "leaveConfirm": "Are you sure you want to leave this club?",
+    "cancelRequest": "Cancel request",
+    "cancelRequestConfirm": "Do you want to cancel your join request to this club?",
     "join": "Join club",
     "subscribed": "✓ Following",
     "follow": "Follow club",
     "eventsTitle": "Club events",
     "noEvents": "No events scheduled at the moment.",
-    "organizeFirstEvent": "+ Organize first event"
+    "organizeFirstEvent": "+ Organize first event",
+    "membersTitle": "Club members",
+    "searchMembers": "Search members...",
+    "noMembers": "No members yet",
+    "noMembersFound": "No members found",
+    "roleOwner": "Owner",
+    "roleAdmin": "Admin",
+    "roleMember": "Member",
+    "removeMember": "Remove from club",
+    "removeMemberConfirm": "Are you sure you want to remove {{name}} from the club?",
+    "manageMembers": "Club members",
+    "manageMembersSub": "View and manage members",
+    "viewAll": "View all"
   },
   "favorites": {
     "title": "My favorites",
@@ -266,7 +286,17 @@
   },
   "notifications": {
     "title": "Notifications",
-    "readAll": "MARK ALL AS READ"
+    "readAll": "MARK ALL AS READ",
+    "emptyTitle": "No notifications",
+    "emptySubtitle": "You will be notified about new registrations, messages and reminders.",
+    "clubJoinRequest": "wants to join your club \"{{clubName}}\"",
+    "clubJoinApproved": "You are now a member of \"{{clubName}}\"",
+    "clubJoinRejected": "Your request to join the club \"{{clubName}}\" was declined",
+    "clubEventCreated": "Club {{clubName}} organizes \"{{eventTitle}}\"",
+    "sportEventCreated": "New {{sportName}} event: \"{{eventTitle}}\"",
+    "eventRegistration": "joined your event \"{{eventTitle}}\"",
+    "eventCancellation": "cancelled their registration for \"{{eventTitle}}\"",
+    "spotAvailable": "A spot is available again for \"{{eventTitle}}\""
   },
   "map": {
     "selectedEvent": "Selected event",
@@ -362,5 +392,78 @@
     "joinedDiscussion": "You joined the discussion - {{count}} member(s)",
     "participantsCount": "{{count}} participant(s)",
     "organizer": "Organizer"
+  },
+  "tracker": {
+    "myProfile": "My profile",
+    "title": "Run",
+    "subtitle": "GPS tracking & performance",
+    "launchLiveTracker": "Start live tracker",
+    "go": "GO",
+    "newSessionBadge": "NEW SESSION",
+    "readyTitle": "Ready for your workout?",
+    "readyDescription": "Select your sport and record your GPS route with real-time metrics.",
+    "startSession": "Start my {{sport}}",
+    "startBySport": {
+      "running": "Start my run",
+      "walking": "Start my walk",
+      "trail": "Start my trail",
+      "cycling": "Start my ride"
+    },
+    "sports": {
+      "running": "Running",
+      "walking": "Walking",
+      "trail": "Trail",
+      "cycling": "Cycling"
+    },
+    "myStats": "My statistics",
+    "km": "km",
+    "thisWeek": "This week",
+    "thisMonth": "This month",
+    "totalCumulative": "All-time total",
+    "recentActivities": "Recent activities",
+    "emptyTitle": "No recorded activities",
+    "emptySubtitle": "Your live recorded workouts will appear here with your pace, distance and GPS routes.",
+    "startFirstSession": "Start my 1st session",
+    "hud": {
+      "kilometers": "KILOMETERS",
+      "time": "TIME",
+      "avgPace": "AVG. PACE",
+      "calories": "CALORIES",
+      "elevationGain": "+{{meters}} m elevation gain"
+    },
+    "detail": {
+      "duration": "DURATION",
+      "elevation": "ELEVATION",
+      "gpsRoute": "GPS ROUTE",
+      "personalNotes": "PERSONAL NOTES",
+      "close": "Close"
+    }
+  },
+  "health": {
+    "appleHealth": "Apple Health",
+    "healthConnect": "Health Connect",
+    "googleHealthConnect": "Google Health Connect",
+    "syncKilometers": "Sync your kilometers",
+    "connectSubtitle": "Connect {{provider}} to track your progress",
+    "connectButton": "Connect {{provider}}",
+    "runningStats": "Running statistics",
+    "syncedWith": "Synced with {{provider}}",
+    "km": "km",
+    "steps": "steps",
+    "thisWeek": "This week",
+    "thisMonth": "This month",
+    "today": "Today",
+    "lastRun": "Last run: {{distance}} km in {{duration}} min ({{pace}})",
+    "modal": {
+      "connectedTo": "Connected to {{provider}}",
+      "connectTo": "Connect {{provider}}",
+      "connectedDescription": "Your kilometers and workouts are automatically synced with RunHub.",
+      "disconnectedDescription": "Allow RunHub to read your running data (distance, steps, heart rate) to automatically track your progress and challenges.",
+      "benefitWeeklyKm": "Automatic calculation of your weekly km",
+      "benefitClubChallenges": "Progress in your club challenges",
+      "benefitPrivacy": "Private and secure data on your device",
+      "disconnectSync": "Disconnect synchronization",
+      "authorizeProvider": "Authorize {{provider}}"
+    }
   }
 }

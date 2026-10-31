@@ -3,15 +3,15 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { HStack, Screen } from '@/components/layout';
 import { FormInput } from '@/components/ui/form-input';
 import { ImageUploadPlaceholder } from '@/components/ui/image-upload-placeholder';
 import { AccentColors, Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { HStack, Screen } from '@/components/layout';
 import { useTheme } from '@/hooks/use-theme';
-import { LocationPickerModal } from '../components/LocationPickerModal';
-import { SportPickerModal } from '../components/SportPickerModal';
 import { DateTimeSection } from '../components/DateTimeSection';
+import { LocationPickerModal } from '../components/LocationPickerModal';
 import { PricingSection } from '../components/PricingSection';
+import { SportPickerModal } from '../components/SportPickerModal';
 import { useCreationScreen } from '../hooks/useCreationScreen';
 
 export function CreationScreen() {
@@ -24,7 +24,7 @@ export function CreationScreen() {
     setClubId,
     title,
     description,
-    sportId,
+    whatsappGroupUrl,
     startsAt,
     venueName,
     capacity,
@@ -168,6 +168,15 @@ export function CreationScreen() {
             value={description}
             onChangeText={(val) => updateField('description', val)}
             multiline
+          />
+
+          <FormInput
+            label="GROUPE WHATSAPP (OPTIONNEL)"
+            placeholder="https://chat.whatsapp.com/..."
+            value={whatsappGroupUrl}
+            onChangeText={(val) => updateField('whatsappGroupUrl', val)}
+            autoCapitalize="none"
+            keyboardType="url"
           />
 
           <Text style={[styles.label, { marginTop: Spacing.space16 }]}>{t('creation.sportLabel').toUpperCase()}</Text>

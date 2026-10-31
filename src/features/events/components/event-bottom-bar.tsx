@@ -9,6 +9,7 @@ export interface EventBottomBarProps {
   placesStatus: string;
   onParticipate: () => void;
   onChat: () => void;
+  hasWhatsApp?: boolean;
   onViewTicket?: () => void;
   isRegistered?: boolean;
   isLoading?: boolean;
@@ -22,6 +23,7 @@ export function EventBottomBar({
   placesStatus,
   onParticipate,
   onChat,
+  hasWhatsApp = false,
   onViewTicket,
   isRegistered = false,
   isLoading = false,
@@ -45,13 +47,17 @@ export function EventBottomBar({
       <View style={styles.rightContent}>
         <TouchableOpacity
           activeOpacity={0.8}
-          style={styles.chatButton}
+          style={[styles.chatButton, hasWhatsApp && styles.whatsappButton]}
           onPress={onChat}
           accessibilityRole="button"
           hitSlop={8}
         >
-          <Ionicons name="chatbubble-outline" size={22} color={Colors.light.text} />
-          <View style={styles.notificationDot} />
+          <Ionicons
+            name={hasWhatsApp ? 'logo-whatsapp' : 'chatbubble-outline'}
+            size={22}
+            color={hasWhatsApp ? '#ffffff' : Colors.light.text}
+          />
+          {!hasWhatsApp && <View style={styles.notificationDot} />}
         </TouchableOpacity>
 
         <View style={styles.participateWrapper}>
@@ -142,6 +148,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: Spacing.space16,
     backgroundColor: BackgroundThemes.Ivoire,
+  },
+  whatsappButton: {
+    backgroundColor: '#25D366',
+    borderColor: '#22c35e',
   },
   notificationDot: {
     position: 'absolute',

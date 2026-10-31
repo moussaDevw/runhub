@@ -10,6 +10,7 @@ export interface CreateClubPayload {
   logoUrl?: string;
   coverUrl?: string;
   baseName?: string;
+  whatsappGroupUrl?: string;
   coords?: Coords;
 }
 
@@ -28,14 +29,31 @@ export interface ClubJoinRequest {
   };
 }
 
+export interface ClubMember {
+  clubId: string;
+  userId: string;
+  role: 'OWNER' | 'ADMIN' | 'MEMBER';
+  createdAt: string;
+  user: {
+    id: string;
+    username: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    avatarUrl: string | null;
+  };
+}
+
 export interface ClubResponse {
   id: string;
   name: string;
   handle: string;
+  ownerId?: string | null;
+  isOwner?: boolean;
   bio: string | null;
   logoUrl: string | null;
   coverUrl: string | null;
   baseName: string | null;
+  whatsappGroupUrl?: string | null;
   coords: Coords | null;
   createdAt: string;
   updatedAt: string;

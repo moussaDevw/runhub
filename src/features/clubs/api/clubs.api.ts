@@ -1,5 +1,5 @@
 import { apiClient } from '@/core/api/client';
-import { ClubJoinRequest, ClubResponse, CreateClubPayload } from '../types/clubs.types';
+import { ClubJoinRequest, ClubMember, ClubResponse, CreateClubPayload } from '../types/clubs.types';
 
 export const ClubsApi = {
   /**
@@ -40,9 +40,18 @@ export const ClubsApi = {
   /**
    * Envoyer une demande d'adhésion à un club
    */
-  async joinClub(clubId: string): Promise<any> {
-    return apiClient<any>(`/clubs/${clubId}/join-requests`, {
+  async joinClub(clubId: string): Promise<ClubJoinRequest> {
+    return apiClient<ClubJoinRequest>(`/clubs/${clubId}/join-requests`, {
       method: 'POST',
+    });
+  },
+
+  /**
+   * Annuler sa demande d'adhésion en attente
+   */
+  async cancelJoinRequest(clubId: string): Promise<any> {
+    return apiClient<any>(`/clubs/${clubId}/join-requests`, {
+      method: 'DELETE',
     });
   },
 
@@ -71,6 +80,13 @@ export const ClubsApi = {
     return apiClient<any>(`/clubs/${clubId}/follow`, {
       method: 'DELETE',
     });
+  },
+
+  /**
+   * Récupérer les membres d'un club
+   */
+  async getClubMembers(clubId: string): Promise<ClubMember[]> {
+    return apiClient<ClubMember[]>(`/clubs/${clubId}/members`);
   },
 
   /**

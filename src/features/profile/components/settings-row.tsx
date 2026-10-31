@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Typography, AccentColors } from '@/constants/theme';
 
@@ -10,6 +10,7 @@ export interface SettingsRowProps {
   value?: boolean;
   onValueChange?: (value: boolean) => void;
   isDestructive?: boolean;
+  isLoading?: boolean;
   onPress?: () => void;
 }
 
@@ -21,6 +22,7 @@ export function SettingsRow({
   value = false,
   onValueChange,
   isDestructive = false,
+  isLoading = false,
   onPress,
 }: SettingsRowProps) {
   
@@ -42,7 +44,9 @@ export function SettingsRow({
       </View>
       
       {/* Right Element */}
-      {type === 'toggle' ? (
+      {isLoading ? (
+        <ActivityIndicator size="small" color={isDestructive ? '#c8392f' : Colors.light.ink3} />
+      ) : type === 'toggle' ? (
         <Switch
           value={value}
           onValueChange={onValueChange}
@@ -56,7 +60,7 @@ export function SettingsRow({
     </>
   );
 
-  if (type === 'toggle' || !onPress) {
+  if (type === 'toggle' || !onPress || isLoading) {
     return <View style={styles.container}>{content}</View>;
   }
 

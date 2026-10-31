@@ -1,10 +1,10 @@
+import { Avatar } from '@/components/ui/avatar';
 import { AccentColors, Colors, Spacing, Typography } from '@/constants/theme';
 import { ClubResponse } from '@/features/clubs/types/clubs.types';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Avatar } from '@/components/ui/avatar';
 import { useTranslation } from 'react-i18next';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export interface ClubCardProps {
   club: ClubResponse;
@@ -13,11 +13,20 @@ export interface ClubCardProps {
 
 export function ClubCard({ club, onPress }: ClubCardProps) {
   const { t } = useTranslation();
+  const isOwner = Boolean(club.isOwner || club.myRole === 'OWNER');
   const membersCount = club._count?.members || 0;
   const eventsCount = club._count?.events || 0;
 
   return (
-    <TouchableOpacity style={styles.card} activeOpacity={0.8} onPress={onPress} accessibilityRole="button">
+    <TouchableOpacity
+      style={[
+        styles.card,
+        isOwner && styles.myClubCardBorder,
+      ]}
+      activeOpacity={0.8}
+      onPress={onPress}
+      accessibilityRole="button"
+    >
       {/* Cover background (with overlay gradient vibe) */}
       <View style={styles.coverContainer}>
         <Image
@@ -25,7 +34,13 @@ export function ClubCard({ club, onPress }: ClubCardProps) {
           style={styles.coverImage}
           contentFit="cover"
         />
-        <View style={styles.verifiedBadgeContainer}>
+        <View style={styles.badgesContainer}>
+          {isOwner && (
+            <View style={styles.myClubBadge}>
+              <Ionicons name="sparkles" size={12} color="#ffffff" />
+              <Text style={styles.myClubText}>{t('club.myClub', { defaultValue: 'Mon club' })}</Text>
+            </View>
+          )}
           {club.verified && (
             <View style={styles.verifiedBadge}>
               <Ionicons name="checkmark-circle" size={14} color="#ffffff" />
@@ -100,6 +115,10 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 3,
   },
+  myClubCardBorder: {
+    borderWidth: 1.5,
+    borderColor: '#fce7e7',
+  },
   coverContainer: {
     height: 110,
     width: '100%',
@@ -110,10 +129,34 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  verifiedBadgeContainer: {
+  badgesContainer: {
     position: 'absolute',
     top: Spacing.space12,
     right: Spacing.space12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  myClubBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: AccentColors.bissap,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 99,
+    gap: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  myClubText: {
+    fontFamily: Typography.corpsGras.fontFamily,
+    fontSize: 10,
+    color: '#ffffff',
+    letterSpacing: 0.4,
+    fontWeight: '700',
   },
   verifiedBadge: {
     flexDirection: 'row',

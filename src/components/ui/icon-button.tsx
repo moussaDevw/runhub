@@ -9,6 +9,7 @@ export interface IconButtonProps {
   hasBadge?: boolean;
   variant?: 'solid' | 'glass' | 'outline' | 'liked' | 'ghost';
   size?: number;
+  iconColor?: string;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -18,6 +19,7 @@ export function IconButton({
   hasBadge,
   variant = 'solid',
   size = 22,
+  iconColor,
   style,
 }: IconButtonProps) {
   const theme = useTheme();
@@ -28,6 +30,7 @@ export function IconButton({
   const isGhost = variant === 'ghost';
 
   const getIconColor = () => {
+    if (iconColor) return iconColor;
     if (isLiked) return '#ffffff';
     if (isOutline || isGhost) return theme.text;
     if (isGlass) return theme.text;

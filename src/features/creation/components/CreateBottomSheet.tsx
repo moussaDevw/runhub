@@ -1,6 +1,9 @@
+import { AccentColors, BackgroundThemes, Colors, Spacing, Typography } from '@/constants/theme';
+import { useCreateModal } from '@/features/creation/store/useCreateModal';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   runOnJS,
@@ -10,9 +13,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AccentColors, BackgroundThemes, Colors, Spacing, Typography } from '@/constants/theme';
-import { useCreateModal } from '@/features/creation/store/useCreateModal';
-import { useTranslation } from 'react-i18next';
 
 export function CreateBottomSheet() {
   const { t } = useTranslation();

@@ -28,6 +28,7 @@ export function useEventPreview() {
   const city = useEventCreationStore((state) => state.city);
   const country = useEventCreationStore((state) => state.country);
   const coverUrl = useEventCreationStore((state) => state.coverUrl);
+  const whatsappGroupUrl = useEventCreationStore((state) => state.whatsappGroupUrl);
   const resetStore = useEventCreationStore((state) => state.resetStore);
   const editingEventId = useEventCreationStore((state) => state.editingEventId);
 
@@ -61,6 +62,7 @@ export function useEventPreview() {
           city,
           country,
           coverUrl: coverUrl || undefined,
+          whatsappGroupUrl: whatsappGroupUrl?.trim() || undefined,
         });
       } else {
         // 1. Create the event
@@ -78,6 +80,7 @@ export function useEventPreview() {
           city,
           country,
           coverUrl: coverUrl || undefined,
+          whatsappGroupUrl: whatsappGroupUrl?.trim() || undefined,
         });
 
         // 2. Publish it immediately
@@ -96,6 +99,7 @@ export function useEventPreview() {
         pathname: '/success',
         params: {
           type: 'publish',
+          id: resultEvent.id,
           title: title,
           capacity: capacity ? String(capacity) : '',
           slug: resultEvent.shareSlug,

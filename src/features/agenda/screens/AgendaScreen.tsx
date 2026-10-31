@@ -1,17 +1,27 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { Screen, Spacer, VStack } from '@/components/layout';
+import { HStack, Screen, Spacer, VStack } from '@/components/layout';
 import { useTheme } from '@/hooks/use-theme';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { AccentColors, Colors, Spacing, Typography } from '@/constants/theme';
 import { ManageEventsCard } from '@/features/events/components';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { ClubEventRow } from '@/features/clubs/components';
 import { formatEventPresentation } from '@/features/events/utils/event.utils';
+import { Avatar } from '@/components/ui/avatar';
+import { useAuth } from '@/features/auth/context/AuthContext';
+import { useRouter } from 'expo-router';
 import { useAgendaScreen } from '../hooks/useAgendaScreen';
 
 export function AgendaScreen() {
   const theme = useTheme();
+  const router = useRouter();
+  const { user } = useAuth();
+
+  const userInitials =
+    user?.firstName && user?.lastName
+      ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+      : 'RH';
   
   const {
     t,
@@ -36,7 +46,17 @@ export function AgendaScreen() {
       onRefresh={onRefresh}
       contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
     >
-      <Text style={[styles.pageTitle, { color: theme.text }]}>{t('agenda.title')}</Text>
+      <HStack align="center" justify="space-between" style={{ marginBottom: Spacing.space12 }}>
+        <Text style={[styles.pageTitle, { color: theme.text, marginBottom: 0 }]}>{t('agenda.title')}</Text>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => router.push('/profil' as any)}
+          accessibilityRole="button"
+          accessibilityLabel="Mon profil"
+        >
+          <Avatar initials={userInitials} size={36} backgroundColor={AccentColors.bissap} />
+        </TouchableOpacity>
+      </HStack>
 
       <ManageEventsCard count={myEventsCount} onPress={handleNavigateManageEvents} />
       <Spacer size="space16" />

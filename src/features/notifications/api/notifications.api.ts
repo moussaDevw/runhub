@@ -39,6 +39,7 @@ export interface NotificationsResponse {
 export interface RegisterDeviceDto {
   pushToken: string;
   platform: 'IOS' | 'ANDROID';
+  locale?: string;
 }
 
 export const notificationsApi = {

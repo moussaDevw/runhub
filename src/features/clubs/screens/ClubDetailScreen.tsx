@@ -1,70 +1,58 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/ui/avatar';
-import { useAuth } from '@/features/auth/context/AuthContext';
 import { IconButton } from '@/components/ui/icon-button';
-import { EventCard } from '@/features/events/components';
-import { Colors, AccentColors, BackgroundThemes, Spacing, Typography } from '@/constants/theme';
+import { AccentColors, BackgroundThemes, Colors, Spacing, Typography } from '@/constants/theme';
 import { formatPrice, formatTime, getDayLabel } from '@/core/utils/locale';
 import { getOrganizerDisplay } from '@/core/utils/user';
+import { EventCard } from '@/features/events/components';
 import { getEventImageSource } from '@/features/events/utils/event.utils';
-import { ClubDetailSkeleton } from '../components/club-detail-skeleton';
-import { useClubDetails } from '../hooks/useClubDetails';
-import { useJoinRequests } from '../hooks/useJoinRequests';
-import { useEventsList } from '@/features/events/hooks/useEvents';
-import { ClubsApi } from '../api/clubs.api';
+import {
+  ClubActionButtons,
+  ClubAdminSection,
+  ClubDetailSkeleton,
+  ClubMembersPreview,
+  ClubWhatsappCard,
+} from '../components';
+import { useClubDetailScreen } from '../hooks/useClubDetailScreen';
 
 export function ClubDetailScreen() {
   const { t } = useTranslation();
-  const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
 
-  const { data: club, isLoading, isError } = useClubDetails(id);
-
-  // Fetch pending requests only if admin/owner (skip otherwise)
-  const isAdminOrOwner = club?.myRole === 'OWNER' || club?.myRole === 'ADMIN';
-  const { data: pendingRequests = [] } = useJoinRequests(isAdminOrOwner ? id : '');
-  const pendingCount = pendingRequests.length;
-
-  // Fetch upcoming events for this club
-  const { data: clubEventsData, isLoading: isLoadingEvents } = useEventsList({ clubId: id });
-  const clubEvents = clubEventsData?.data ?? [];
-
-  const followMutation = useMutation({
-    mutationFn: () => {
-      if (club?.isFollower) {
-        return ClubsApi.unfollowClub(id);
-      } else {
-        return ClubsApi.followClub(id);
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['club', id] });
-    },
-  });
-
-  const joinMutation = useMutation({
-    mutationFn: () => {
-      if (club?.isMember) {
-        if (!user?.id) throw new Error('Utilisateur non connecté');
-        return ClubsApi.leaveClub(id, user.id);
-      } else {
-        return ClubsApi.joinClub(id);
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['club', id] });
-    },
-  });
+  const {
+    id,
+    club,
+    isLoading,
+    isError,
+    isAdminOrOwner,
+    pendingCount,
+    clubEvents,
+    isLoadingEvents,
+    members,
+    isJoinPending,
+    isFollowPending,
+    handleJoinPress,
+    handleFollowPress,
+    handleOpenWhatsapp,
+    handleCreateEvent,
+    handleViewRequests,
+    handleViewMembers,
+    handleEventPress,
+    goBack,
+  } = useClubDetailScreen();
 
   if (isLoading) {
     return (
@@ -77,62 +65,93 @@ export function ClubDetailScreen() {
 
   if (isError || !club) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ color: Colors.light.text, fontFamily: Typography.corps.fontFamily }}>{t('club.errorLoad')}</Text>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20 }}>
-          <Text style={{ color: AccentColors.bissap, fontFamily: Typography.corpsGras.fontFamily }}>{t('common.back')}</Text>
+      <View style={[styles.container, styles.center]}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <Ionicons name="alert-circle-outline" size={48} color={AccentColors.bissap} />
+        <Text style={styles.errorText}>{t('club.errorLoad')}</Text>
+        <TouchableOpacity style={styles.backButton} onPress={goBack}>
+          <Text style={styles.backButtonText}>{t('common.back')}</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
+  const defaultCover =
+    'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&q=80&w=800';
+
+  const totalMembersCount = members.length || club._count?.members || 0;
+
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* HEADER IMAGE SECTION */}
+      <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+        {/* === HEADER COVER & BACK BUTTON === */}
         <View style={styles.headerImageContainer}>
           <Image
-            source={club.coverUrl ? { uri: club.coverUrl } : require('@/assets/images/bg_home.jpeg')}
+            source={{ uri: club.coverUrl || defaultCover }}
             style={styles.headerImage}
             contentFit="cover"
           />
-
-          <View style={[styles.backButtonContainer, { top: Math.max(insets.top, 20) }]}>
-            <IconButton iconName="chevron-back" variant="glass" onPress={() => router.back()} />
+          <View style={[styles.backButtonContainer, { top: insets.top + Spacing.space12 }]}>
+            <IconButton
+              iconName="chevron-back"
+              variant="glass"
+              onPress={goBack}
+            />
           </View>
         </View>
 
-        {/* OVERLAPPING CONTENT CARD */}
+        {/* === CONTENT CARD === */}
         <View style={styles.contentCard}>
-          {/* Avatar over the border */}
+          {/* Logo / Avatar */}
           <View style={styles.avatarWrapper}>
             {club.logoUrl ? (
-              <Image source={{ uri: club.logoUrl }} style={{ width: 64, height: 64, borderRadius: 32 }} />
+              <Image source={{ uri: club.logoUrl }} style={styles.logoImage} />
             ) : (
-              <Avatar initials={club.name.substring(0, 2).toUpperCase()} size={64} backgroundColor="#f2784f" />
+              <Avatar
+                initials={club.name.substring(0, 2).toUpperCase()}
+                size={64}
+                backgroundColor="#f2784f"
+              />
             )}
           </View>
 
-          {/* Club Info */}
+          {/* Club Info: Name + Verified Badge */}
           <View style={styles.titleRow}>
             <Text style={styles.clubName}>{club.name}</Text>
             {club.verified && (
-              <Ionicons name="checkmark-circle" size={18} color="#3b82f6" style={{ marginLeft: 4 }} />
+              <Ionicons
+                name="checkmark-circle"
+                size={18}
+                color="#3b82f6"
+                style={{ marginLeft: 4 }}
+              />
             )}
           </View>
 
-          <Text style={styles.description}>
-            {club.bio || t('club.noDescription')}
-          </Text>
+          {/* Bio / Description */}
+          <Text style={styles.description}>{club.bio || t('club.noDescription')}</Text>
 
           {/* Stats Row */}
           <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{club._count?.members || 0}</Text>
-              <Text style={styles.statLabel}>{t('club.members')}</Text>
-            </View>
+            <TouchableOpacity
+              style={styles.statItem}
+              activeOpacity={0.7}
+              onPress={handleViewMembers}
+            >
+              <Text style={styles.statValue}>{totalMembersCount}</Text>
+              <View style={styles.statLabelRow}>
+                <Text style={styles.statLabel}>{t('club.members')}</Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={11}
+                  color={Colors.light.ink3}
+                  style={{ marginLeft: 2 }}
+                />
+              </View>
+            </TouchableOpacity>
+
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{club._count?.events || 0}</Text>
               <Text style={styles.statLabel}>{t('club.events')}</Text>
@@ -141,105 +160,35 @@ export function ClubDetailScreen() {
 
           {/* === ADMIN / OWNER PANEL === */}
           {isAdminOrOwner && (
-            <View style={styles.adminSection}>
-              <View style={styles.adminSectionHeader}>
-                <Ionicons name="settings-outline" size={16} color={Colors.light.ink3} />
-                <Text style={styles.adminSectionTitle}>{t('club.management')}</Text>
-              </View>
-
-              <View style={styles.adminCardsContainer}>
-                {/* 1. Demandes d'adhésion */}
-                <TouchableOpacity
-                  style={styles.adminCard}
-                  activeOpacity={0.8}
-                  onPress={() => router.push(`/club/${id}/requests` as any)}
-                >
-                  <View style={styles.adminCardLeft}>
-                    <View style={styles.adminIconBox}>
-                      <Ionicons name="people-outline" size={20} color={AccentColors.bissap} />
-                    </View>
-                    <View>
-                      <Text style={styles.adminCardTitle}>{t('club.joinRequests')}</Text>
-                      <Text style={styles.adminCardSub}>
-                        {pendingCount > 0
-                          ? t('club.pendingRequestsCount', { count: pendingCount })
-                          : t('club.noPendingRequests')}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={styles.adminCardRight}>
-                    {pendingCount > 0 && (
-                      <View style={styles.badge}>
-                        <Text style={styles.badgeText}>{pendingCount}</Text>
-                      </View>
-                    )}
-                    <Ionicons name="chevron-forward" size={18} color={Colors.light.ink3} />
-                  </View>
-                </TouchableOpacity>
-
-                {/* 2. Créer un événement pour ce club */}
-                <TouchableOpacity
-                  style={[styles.adminCard, { marginTop: Spacing.space12 }]}
-                  activeOpacity={0.8}
-                  onPress={() => router.push(`/event/create?clubId=${id}` as any)}
-                >
-                  <View style={styles.adminCardLeft}>
-                    <View style={[styles.adminIconBox, { backgroundColor: '#f0f1f8' }]}>
-                      <Ionicons name="calendar-outline" size={20} color={AccentColors.indigoWolof} />
-                    </View>
-                    <View>
-                      <Text style={styles.adminCardTitle}>{t('club.createEvent')}</Text>
-                      <Text style={styles.adminCardSub}>{t('club.createEventSub')}</Text>
-                    </View>
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color={Colors.light.ink3} />
-                </TouchableOpacity>
-              </View>
-            </View>
+            <ClubAdminSection
+              pendingCount={pendingCount}
+              membersCount={totalMembersCount}
+              onPressRequests={handleViewRequests}
+              onPressCreateEvent={handleCreateEvent}
+              onPressMembers={handleViewMembers}
+            />
           )}
 
-          {/* Action Buttons — hidden for owner/admin */}
+          {/* === ACTION BUTTONS (MEMBER / NON-MEMBER) === */}
           {!isAdminOrOwner && (
-            <View style={styles.actionRow}>
-              {/* Join / Request / Leave button */}
-              <TouchableOpacity
-                style={[
-                  styles.joinButton,
-                  club.isMember && styles.leaveButton,
-                  club.joinRequestStatus === 'PENDING' && styles.pendingButton,
-                ]}
-                onPress={() => joinMutation.mutate()}
-                disabled={joinMutation.isPending || club.joinRequestStatus === 'PENDING'}
-              >
-                {joinMutation.isPending ? (
-                  <ActivityIndicator size="small" color={club.isMember ? '#e06666' : '#ffffff'} />
-                ) : club.isMember ? (
-                  <Text style={styles.leaveButtonText}>{t('club.leave')}</Text>
-                ) : club.joinRequestStatus === 'PENDING' ? (
-                  <Text style={styles.pendingButtonText}>{t('club.requestSent')}</Text>
-                ) : (
-                  <Text style={styles.joinButtonText}>{t('club.join')}</Text>
-                )}
-              </TouchableOpacity>
-
-              <View style={{ width: Spacing.space12 }} />
-
-              {/* Follow / Unfollow button */}
-              <TouchableOpacity
-                style={[styles.followButton, club.isFollower && styles.subscribedButton]}
-                onPress={() => followMutation.mutate()}
-                disabled={followMutation.isPending}
-              >
-                {followMutation.isPending ? (
-                  <ActivityIndicator size="small" color={club.isFollower ? Colors.light.text : '#ffffff'} />
-                ) : club.isFollower ? (
-                  <Text style={styles.subscribedText}>{t('club.subscribed')}</Text>
-                ) : (
-                  <Text style={styles.followButtonText}>{t('club.follow')}</Text>
-                )}
-              </TouchableOpacity>
-            </View>
+            <ClubActionButtons
+              club={club}
+              isJoinPending={isJoinPending}
+              isFollowPending={isFollowPending}
+              onPressJoin={handleJoinPress}
+              onPressFollow={handleFollowPress}
+            />
           )}
+
+          {/* === MEMBERS PREVIEW CARD === */}
+          <ClubMembersPreview
+            members={members}
+            totalMembersCount={totalMembersCount}
+            onPress={handleViewMembers}
+          />
+
+          {/* === WHATSAPP COMMUNITY CARD === */}
+          {club.whatsappGroupUrl && <ClubWhatsappCard onPress={handleOpenWhatsapp} />}
 
           {/* === UPCOMING EVENTS OF THE CLUB === */}
           <View style={styles.eventsSection}>
@@ -249,17 +198,28 @@ export function ClubDetailScreen() {
             </View>
 
             {isLoadingEvents ? (
-              <ActivityIndicator size="small" color={AccentColors.bissap} style={{ marginVertical: 20 }} />
+              <ActivityIndicator
+                size="small"
+                color={AccentColors.bissap}
+                style={{ marginVertical: 20 }}
+              />
             ) : clubEvents.length === 0 ? (
               <View style={styles.emptyEventsBox}>
-                <Ionicons name="calendar-outline" size={36} color={Colors.light.ink3} style={{ marginBottom: 8 }} />
+                <Ionicons
+                  name="calendar-outline"
+                  size={36}
+                  color={Colors.light.ink3}
+                  style={{ marginBottom: 8 }}
+                />
                 <Text style={styles.emptyEventsText}>{t('club.noEvents')}</Text>
                 {isAdminOrOwner && (
                   <TouchableOpacity
                     style={styles.createEventLink}
-                    onPress={() => router.push(`/event/create?clubId=${id}` as any)}
+                    onPress={handleCreateEvent}
                   >
-                    <Text style={styles.createEventLinkText}>{t('club.organizeFirstEvent')}</Text>
+                    <Text style={styles.createEventLinkText}>
+                      {t('club.organizeFirstEvent')}
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -288,7 +248,7 @@ export function ClubDetailScreen() {
                     sportColor={event.sport.color}
                     badgeTime={`${getDayLabel(event.startsAt)} ${formatTime(event.startsAt)}`}
                     imageSource={getEventImageSource(event.coverUrl)}
-                    onPress={() => router.push(`/event/${event.id}` as any)}
+                    onPress={() => handleEventPress(event.id)}
                   />
                 );
               })
@@ -304,6 +264,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: BackgroundThemes.Ivoire,
+  },
+  center: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.space20,
+  },
+  errorText: {
+    fontFamily: Typography.corps.fontFamily,
+    fontSize: 15,
+    color: Colors.light.text,
+    marginTop: Spacing.space12,
+    marginBottom: Spacing.space16,
+  },
+  backButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e8e5e0',
+  },
+  backButtonText: {
+    fontFamily: Typography.corpsGras.fontFamily,
+    fontSize: 14,
+    color: Colors.light.text,
   },
   headerImageContainer: {
     width: '100%',
@@ -336,6 +321,11 @@ const styles = StyleSheet.create({
     borderRadius: 99,
     alignSelf: 'flex-start',
   },
+  logoImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+  },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -360,6 +350,10 @@ const styles = StyleSheet.create({
   statItem: {
     marginRight: Spacing.space32,
   },
+  statLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   statValue: {
     fontFamily: Typography.titre.fontFamily,
     fontSize: 18,
@@ -371,183 +365,43 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.light.ink3,
   },
-  actionRow: {
+  eventsSection: {
+    marginTop: Spacing.space8,
+  },
+  eventsHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.space32,
-  },
-  joinButton: {
-    flex: 1.2,
-    backgroundColor: AccentColors.indigoWolof || '#2b3b8c',
-    height: 48,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  joinButtonText: {
-    fontFamily: Typography.corpsGras.fontFamily,
-    fontSize: 15,
-    color: '#ffffff',
-  },
-  leaveButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#e06666',
-  },
-  leaveButtonText: {
-    fontFamily: Typography.corpsGras.fontFamily,
-    fontSize: 15,
-    color: '#e06666',
-  },
-  pendingButton: {
-    backgroundColor: '#f5f2ee',
-    borderWidth: 1,
-    borderColor: '#d6d3ce',
-  },
-  pendingButtonText: {
-    fontFamily: Typography.corpsGras.fontFamily,
-    fontSize: 15,
-    color: '#8b8882',
-  },
-  followButton: {
-    flex: 1,
-    backgroundColor: AccentColors.bissap,
-    height: 48,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  followButtonText: {
-    fontFamily: Typography.corpsGras.fontFamily,
-    fontSize: 15,
-    color: '#ffffff',
-  },
-  subscribedButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: Colors.light.backgroundElement,
-  },
-  subscribedText: {
-    fontFamily: Typography.corpsGras.fontFamily,
-    fontSize: 15,
-    color: Colors.light.text,
+    marginBottom: Spacing.space16,
   },
   sectionTitle: {
     fontFamily: Typography.titre.fontFamily,
     fontSize: 18,
     color: Colors.light.text,
-    marginBottom: Spacing.space16,
-  },
-  // Admin section
-  adminSection: {
-    marginBottom: Spacing.space24,
-  },
-  adminSectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.space12,
-    gap: 6,
-  },
-  adminSectionTitle: {
-    fontFamily: Typography.meta.fontFamily,
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.light.ink3,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-  adminCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: Spacing.space16,
-    borderWidth: 1,
-    borderColor: '#f0ede9',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  adminCardLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.space12,
-    flex: 1,
-  },
-  adminIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: '#fdf0f3',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  adminCardTitle: {
-    fontFamily: Typography.corpsGras.fontFamily,
-    fontSize: 14,
-    color: Colors.light.text,
-  },
-  adminCardSub: {
-    fontFamily: Typography.corps.fontFamily,
-    fontSize: 12,
-    color: Colors.light.ink3,
-    marginTop: 2,
-  },
-  adminCardRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  badge: {
-    backgroundColor: AccentColors.bissap,
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    paddingHorizontal: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeText: {
-    fontFamily: Typography.corpsGras.fontFamily,
-    fontSize: 11,
-    color: '#ffffff',
-  },
-  adminCardsContainer: {
-    gap: Spacing.space8,
-  },
-  eventsSection: {
-    marginTop: Spacing.space12,
-  },
-  eventsHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.space16,
+    marginRight: 8,
   },
   eventsCountBadge: {
-    fontFamily: Typography.meta.fontFamily,
-    fontSize: 13,
+    fontFamily: Typography.corpsGras.fontFamily,
+    fontSize: 12,
     color: Colors.light.ink3,
-    fontWeight: '700',
+    backgroundColor: '#ebe7e1',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
   },
   emptyEventsBox: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 32,
-    paddingHorizontal: 20,
     backgroundColor: '#ffffff',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#f0ede9',
+    borderColor: '#e8e5e0',
+    borderStyle: 'dashed',
   },
   emptyEventsText: {
     fontFamily: Typography.corps.fontFamily,
     fontSize: 14,
     color: Colors.light.ink3,
-    textAlign: 'center',
   },
   createEventLink: {
     marginTop: Spacing.space12,
@@ -562,4 +416,3 @@ const styles = StyleSheet.create({
     color: AccentColors.bissap,
   },
 });
-

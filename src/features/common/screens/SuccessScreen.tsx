@@ -3,20 +3,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { Stack, useGlobalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View, Share } from 'react-native';
+import { Linking, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function SuccessScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const { type, title, capacity, slug, time, id } = useGlobalSearchParams<{
+  const { type, title, capacity, slug, time, id, whatsappGroupUrl } = useGlobalSearchParams<{
     type?: string;
     title?: string;
     capacity?: string;
     slug?: string;
     time?: string;
     id?: string;
+    whatsappGroupUrl?: string;
   }>();
 
   const isPublish = type === 'publish';
@@ -107,17 +108,15 @@ export function SuccessScreen() {
               <TouchableOpacity
                 style={styles.secondaryButton}
                 activeOpacity={0.8}
-                onPress={() => router.push('/(tabs)/agenda')}
+                onPress={() => {
+                  if (targetId) {
+                    router.push(`/event/${targetId}` as any);
+                  } else {
+                    router.push('/profil?tab=agenda' as any);
+                  }
+                }}
               >
                 <Text style={styles.secondaryButtonText}>{t('success.publish.manage')}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.tertiaryButton}
-                activeOpacity={0.8}
-                onPress={() => router.push(`/event/${eventSlug}` as any)}
-              >
-                <Text style={styles.tertiaryButtonText}>{t('success.publish.viewPage')}</Text>
               </TouchableOpacity>
             </>
           ) : (
@@ -130,14 +129,22 @@ export function SuccessScreen() {
                 <Text style={styles.primaryButtonText}>{t('success.join.viewTicket')}</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                activeOpacity={0.8}
-                onPress={() => router.replace('/chat/1' as any)}
-              >
-                <Ionicons name="chatbubble-outline" size={20} color="#ffffff" style={styles.chatIcon} />
-                <Text style={styles.secondaryButtonText}>{t('success.join.openChat')}</Text>
-              </TouchableOpacity>
+              {whatsappGroupUrl ? (
+                <TouchableOpacity
+                  style={[styles.secondaryButton, { borderColor: '#25D366' }]}
+                  activeOpacity={0.8}
+                  onPress={async () => {
+                    try {
+                      await Linking.openURL(whatsappGroupUrl);
+                    } catch (e) {
+                      console.warn('Cannot open WhatsApp url:', e);
+                    }
+                  }}
+                >
+                  <Ionicons name="logo-whatsapp" size={20} color="#25D366" style={styles.chatIcon} />
+                  <Text style={[styles.secondaryButtonText, { color: '#25D366' }]}>Rejoindre le WhatsApp</Text>
+                </TouchableOpacity>
+              ) : null}
 
               <TouchableOpacity
                 style={styles.tertiaryButton}

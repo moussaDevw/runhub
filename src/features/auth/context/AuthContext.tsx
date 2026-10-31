@@ -1,6 +1,7 @@
 import { setOnUnauthenticated } from '@/core/api/client';
+import { queryClient } from '@/core/api/query-client';
 import { TokenStorage } from '@/core/api/token-storage';
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AuthApi } from '../api/auth.api';
 import { User } from '../types/auth.types';
 
@@ -54,25 +55,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ): Promise<User> => {
     const res = await AuthApi.verifyOAuth(provider, idToken, firstName, lastName);
 
+    // Repartir d'un cache vide pour ne jamais afficher les données d'un compte précédent
+    queryClient.clear();
+
+    let finalUser: User;
     try {
-      const fullUser = await AuthApi.getMe();
-      const finalToken = await TokenStorage.getAccessToken();
-      setUser(fullUser);
-      setSession(finalToken);
-      return fullUser;
+      finalUser = await AuthApi.getMe();
     } catch {
-      const token = await TokenStorage.getAccessToken();
-      setUser(res.user);
-      setSession(token);
-      return res.user;
+      finalUser = res.user;
     }
+    const token = await TokenStorage.getAccessToken();
+    // user est défini AVANT session pour que les écrans protégés ne s'affichent jamais avec user = null
+    setUser(finalUser);
+    setSession(token);
+    return finalUser;
   }, []);
 
+  const isLoggingOut = useRef(false);
+
   const logout = useCallback(async () => {
-    await AuthApi.logout();
-    await TokenStorage.clearTokens();
-    setUser(null);
-    setSession(null);
+    // Évite les déconnexions concurrentes (bouton + 401 simultanés)
+    if (isLoggingOut.current) return;
+    isLoggingOut.current = true;
+    try {
+      await AuthApi.logout();
+      // Couper la session d'abord : Stack.Protected démonte les écrans protégés…
+      setSession(null);
+      setUser(null);
+      // …puis vider le cache, sans observers bloqués en loading
+      queryClient.clear();
+    } finally {
+      isLoggingOut.current = false;
+    }
   }, []);
 
   // Register logout as the global unauthenticated handler so the API client

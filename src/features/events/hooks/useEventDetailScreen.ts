@@ -1,18 +1,18 @@
-import { Alert, Platform, Linking } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/features/auth/context/AuthContext';
-import { useFavoriteIds, useToggleFavorite } from '@/features/events/hooks/useFavorites';
 import { getDeviceLocale, isEnglish } from '@/core/utils/locale';
 import { getOrganizerDisplay } from '@/core/utils/user';
-import { 
-  useEventDetail, 
-  useEventParticipants, 
-  useRegistrationStatus, 
-  useRegister, 
-  useCancelRegistration 
-} from './useEvents';
+import { useAuth } from '@/features/auth/context/AuthContext';
+import { useFavoriteIds, useToggleFavorite } from '@/features/events/hooks/useFavorites';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { Alert, Linking, Platform } from 'react-native';
 import { getEventImageSource } from '../utils/event.utils';
+import {
+  useCancelRegistration,
+  useEventDetail,
+  useEventParticipants,
+  useRegister,
+  useRegistrationStatus
+} from './useEvents';
 
 export function useEventDetailScreen() {
   const router = useRouter();
@@ -92,6 +92,7 @@ export function useEventDetailScreen() {
               title: encodeURIComponent(event?.title || ''),
               time: timeDisplay,
               id: id,
+              whatsappGroupUrl: event?.whatsappGroupUrl || '',
             },
           } as any);
         },
@@ -108,9 +109,9 @@ export function useEventDetailScreen() {
       const lat = event.coords.lat;
       const lng = event.coords.lng;
       const placeId = event.googlePlaceId || '';
-      
+
       const googleMapsWebUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}${placeId ? `&query_place_id=${placeId}` : ''}`;
-      
+
       try {
         if (Platform.OS === 'ios') {
           await Linking.openURL(`comgooglemaps://?q=${lat},${lng}`);
@@ -163,11 +164,11 @@ export function useEventDetailScreen() {
   // Build participants avatar list from real data
   const participantAvatars = event
     ? participants.slice(0, 6).map((p) => ({
-        id: p.user.id,
-        initials: `${(p.user.firstName || '?')[0]}${(p.user.lastName || '?')[0]}`.toUpperCase(),
-        bgColor: event.sport.color,
-        avatarUrl: p.user.avatarUrl || undefined,
-      }))
+      id: p.user.id,
+      initials: `${(p.user.firstName || '?')[0]}${(p.user.lastName || '?')[0]}`.toUpperCase(),
+      bgColor: event.sport.color,
+      avatarUrl: p.user.avatarUrl || undefined,
+    }))
     : [];
 
   const imageSource = event ? getEventImageSource(event.coverUrl) : null;

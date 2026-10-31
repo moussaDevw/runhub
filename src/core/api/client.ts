@@ -70,6 +70,8 @@ interface ApiClientOptions extends Omit<RequestInit, 'body'> {
   baseUrl?: string;
   /** Skip injecting the Auth token (e.g., for login/register endpoints) */
   skipAuth?: boolean;
+  /** Don't attempt a token refresh / global logout on 401 (e.g., for the logout endpoint itself) */
+  skipRefresh?: boolean;
   /** Internal flag — prevents infinite retry loop on refresh failure */
   _isRetry?: boolean;
 }
@@ -128,6 +130,12 @@ async function refreshAccessToken(): Promise<string> {
 
     await TokenStorage.setAccessToken(newAccessToken);
 
+    // Si le backend pratique la rotation de refresh tokens, sauvegarder le nouveau
+    const newRefreshToken: string | undefined = json.refreshToken ?? json.refresh_token;
+    if (newRefreshToken) {
+      await TokenStorage.setRefreshToken(newRefreshToken);
+    }
+
     // Resolve all queued callers with the new token
     refreshQueue.forEach(({ resolve }) => resolve(newAccessToken));
     return newAccessToken;
@@ -154,7 +162,7 @@ export async function apiClient<T>(
   endpoint: string,
   options: ApiClientOptions = {},
 ): Promise<T> {
-  const { body, baseUrl, skipAuth, _isRetry = false, headers: customHeaders, ...fetchOptions } = options;
+  const { body, baseUrl, skipAuth, skipRefresh, _isRetry = false, headers: customHeaders, ...fetchOptions } = options;
 
   const url = `${baseUrl ?? BASE_URL}${endpoint}`;
 
@@ -183,7 +191,7 @@ export async function apiClient<T>(
   });
 
   // --- 401 Handling: try refresh + retry once ---
-  if (response.status === 401 && !skipAuth && !_isRetry) {
+  if (response.status === 401 && !skipAuth && !skipRefresh && !_isRetry) {
     try {
       await refreshAccessToken();
       // Retry the original request with the new token (marked as retry to prevent loop)

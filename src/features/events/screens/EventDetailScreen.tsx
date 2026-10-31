@@ -1,16 +1,16 @@
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { MapLibreView } from '@/components/ui/map-libre-view';
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { Stack, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { MapLibreView } from '@/components/ui/map-libre-view';
 import { useTranslation } from 'react-i18next';
+import { Alert, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AvatarGroup } from '@/components/ui/avatar';
 import { IconButton } from '@/components/ui/icon-button';
-import { EventBottomBar, InfoSquareCard, OrganizerRow, EventDetailSkeleton } from '@/features/events/components';
-import { Colors, BackgroundThemes, Spacing, Typography, AccentColors } from '@/constants/theme';
+import { AccentColors, BackgroundThemes, Colors, Spacing, Typography } from '@/constants/theme';
 import { formatPrice } from '@/core/utils/locale';
+import { EventBottomBar, EventDetailSkeleton, InfoSquareCard, OrganizerRow } from '@/features/events/components';
 import { useEventDetailScreen } from '../hooks/useEventDetailScreen';
 
 export function EventDetailScreen() {
@@ -43,6 +43,26 @@ export function EventDetailScreen() {
     handleOpenDirections,
     goBack,
   } = useEventDetailScreen();
+
+  const handleOpenWhatsApp = async () => {
+    if (event?.whatsappGroupUrl) {
+      try {
+        const canOpen = await Linking.canOpenURL(event.whatsappGroupUrl);
+        if (canOpen) {
+          await Linking.openURL(event.whatsappGroupUrl);
+          return;
+        }
+      } catch (e) {
+        console.warn('Cannot open WhatsApp url:', e);
+      }
+      Linking.openURL(event.whatsappGroupUrl);
+    } else {
+      Alert.alert(
+        'Groupe WhatsApp',
+        "L'organisateur n'a pas encore renseigné de lien de groupe WhatsApp pour cet événement."
+      );
+    }
+  };
 
   if (isLoading) {
     return (
@@ -82,24 +102,24 @@ export function EventDetailScreen() {
 
           {/* Top Navigation Buttons */}
           <View style={[styles.navButtons, { top: Math.max(insets.top, 20) }]}>
-            <IconButton iconName="chevron-back" variant="glass" onPress={() => router.back()} />
+            <IconButton iconName="chevron-back" variant="outline" onPress={() => router.back()} />
             <View style={styles.rightNavButtons}>
               {isOrganizer && (
                 <>
-                  <IconButton 
-                    iconName="create-outline" 
-                    variant="glass" 
-                    onPress={() => id && router.push(`/(tabs)/creer?id=${id}` as any)} 
+                  <IconButton
+                    iconName="create-outline"
+                    variant="outline"
+                    onPress={() => id && router.push(`/event/create?id=${id}` as any)}
                   />
                   <View style={{ width: Spacing.space12 }} />
                 </>
               )}
-              <IconButton iconName="share-outline" variant="glass" />
+              <IconButton iconName="share-outline" variant="outline" />
               <View style={{ width: Spacing.space12 }} />
-              <IconButton 
-                iconName={liked ? "heart" : "heart-outline"} 
-                variant={liked ? "liked" : "glass"} 
-                onPress={toggleLiked} 
+              <IconButton
+                iconName={liked ? "heart" : "heart-outline"}
+                variant={liked ? "liked" : "outline"}
+                onPress={toggleLiked}
               />
             </View>
           </View>
@@ -206,6 +226,28 @@ export function EventDetailScreen() {
             )}
           </View>
 
+          {/* WhatsApp Community Card */}
+          {event.whatsappGroupUrl && (
+            <View style={{ marginTop: Spacing.space24 }}>
+              <TouchableOpacity
+                style={styles.whatsappCard}
+                activeOpacity={0.85}
+                onPress={handleOpenWhatsApp}
+              >
+                <View style={styles.whatsappCardLeft}>
+                  <View style={styles.whatsappIconCircle}>
+                    <Ionicons name="logo-whatsapp" size={22} color="#ffffff" />
+                  </View>
+                  <View style={styles.whatsappCardTexts}>
+                    <Text style={styles.whatsappCardTitle}>Communauté WhatsApp</Text>
+                    <Text style={styles.whatsappCardSubtitle}>Rejoindre le groupe officiel des coureurs</Text>
+                  </View>
+                </View>
+                <Ionicons name="open-outline" size={20} color="#25D366" />
+              </TouchableOpacity>
+            </View>
+          )}
+
           {/* Registration status card */}
           {isRegistered && (
             <View style={{ marginTop: Spacing.space24 }}>
@@ -253,7 +295,8 @@ export function EventDetailScreen() {
         }
         onParticipate={handleParticipate}
         onViewTicket={handleViewTicket}
-        onChat={() => router.push(`/chat/${id}` as any)}
+        onChat={handleOpenWhatsApp}
+        hasWhatsApp={!!event.whatsappGroupUrl}
         isRegistered={isRegistered}
         isLoading={isMutating}
         isOrganizer={isOrganizer}
@@ -437,6 +480,50 @@ const styles = StyleSheet.create({
   noParticipantsText: {
     fontFamily: Typography.corps.fontFamily,
     fontSize: 14,
+    color: Colors.light.ink3,
+  },
+  whatsappCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: '#25D366',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 16,
+    shadowColor: '#25D366',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  whatsappCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  whatsappIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#25D366',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  whatsappCardTexts: {
+    flex: 1,
+  },
+  whatsappCardTitle: {
+    fontFamily: Typography.corpsGras.fontFamily,
+    fontSize: 15,
+    color: Colors.light.text,
+    marginBottom: 2,
+  },
+  whatsappCardSubtitle: {
+    fontFamily: Typography.corps.fontFamily,
+    fontSize: 12,
     color: Colors.light.ink3,
   },
   registeredCard: {

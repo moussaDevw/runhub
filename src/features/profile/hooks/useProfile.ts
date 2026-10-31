@@ -4,14 +4,17 @@ import { useUpdateUserSports } from '@/features/sports/hooks/useSports';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 export function useProfile() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { user, logout, refreshUser } = useAuth();
   const updateSportsMutation = useUpdateUserSports();
 
   // deletingSportId is the only piece of local UI state needed
   const [deletingSportId, setDeletingSportId] = useState<string | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Derive toggle states directly from user — avoids useState+useEffect anti-pattern
   const notificationsEnabled = user?.notifEnabled ?? true;
@@ -22,8 +25,8 @@ export function useProfile() {
     if (!user?.sports) return;
     if (user.sports.length <= 2) {
       Alert.alert(
-        'Action impossible',
-        'Vous devez garder au moins 2 sports favoris pour personnaliser votre expérience.'
+        t('common.actionImpossible'),
+        t('profile.minSportsError')
       );
       return;
     }
@@ -57,6 +60,15 @@ export function useProfile() {
     }
   };
 
+  const updateLanguage = async (locale: string) => {
+    try {
+      await ProfileApi.updateSettings({ locale });
+      await refreshUser();
+    } catch (err) {
+      console.error('Erreur mise à jour langue:', err);
+    }
+  };
+
   const setLocationEnabled = async (_val: boolean) => {
     // Si désactivé, on pourrait par exemple envoyer une coordonnée par défaut ou gérer côté app
   };
@@ -67,8 +79,26 @@ export function useProfile() {
   const initials = ((user?.firstName?.[0] || fullName[0] || 'T') + (user?.lastName?.[0] || fullName.split(' ')[1]?.[0] || 'D')).toUpperCase();
 
   const handleLogout = async () => {
-    await logout();
-    router.replace('/auth/login' as any);
+    Alert.alert(
+      t('profile.logout'),
+      t('profile.logoutConfirm'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('profile.logout'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsLoggingOut(true);
+              // Stack.Protected redirige automatiquement vers l'écran d'accueil
+              await logout();
+            } finally {
+              setIsLoggingOut(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   return {
@@ -83,7 +113,9 @@ export function useProfile() {
     setLocationEnabled,
     ecoModeEnabled,
     setEcoModeEnabled,
+    updateLanguage,
     handleLogout,
+    isLoggingOut,
     handleRemoveSport,
     deletingSportId,
     router,

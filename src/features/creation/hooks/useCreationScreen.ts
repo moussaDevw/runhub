@@ -42,6 +42,7 @@ export function useCreationScreen() {
   const city = useEventCreationStore((state) => state.city);
   const country = useEventCreationStore((state) => state.country);
   const coverUrl = useEventCreationStore((state) => state.coverUrl);
+  const whatsappGroupUrl = useEventCreationStore((state) => state.whatsappGroupUrl);
   const isPaid = useEventCreationStore((state) => state.isPaidToggle);
   const updateField = useEventCreationStore((state) => state.updateField);
   const resetStore = useEventCreationStore((state) => state.resetStore);
@@ -79,6 +80,7 @@ export function useCreationScreen() {
       updateField('city', event.city || undefined);
       updateField('country', event.country || undefined);
       updateField('coverUrl', event.coverUrl || null);
+      updateField('whatsappGroupUrl', event.whatsappGroupUrl || '');
       updateField('isPaidToggle', event.price > 0);
     }
   }, [id, event, editingEventId, updateField]);
@@ -111,6 +113,7 @@ export function useCreationScreen() {
         city,
         country,
         coverUrl: coverUrl || undefined,
+        whatsappGroupUrl: whatsappGroupUrl?.trim() || undefined,
       });
 
       // Invalidate React Query caches
@@ -184,6 +187,7 @@ export function useCreationScreen() {
     setClubId: (id?: string) => updateField('clubId', id),
     title,
     description,
+    whatsappGroupUrl,
     sportId,
     startsAt,
     venueName,

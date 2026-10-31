@@ -19,17 +19,50 @@ SplashScreen.preventAutoHideAsync().catch(() => {
 });
 
 function RootNavigation() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   usePushNotifications({ isAuthenticated });
+
+  // Pendant le bootstrap, on ne sait pas encore si une session existe :
+  // index.tsx affiche le loader, on évite de basculer les guards trop tôt.
+  const isLoggedIn = !isLoading && isAuthenticated;
 
   return (
     <ThemeProvider value={DefaultTheme}>
       <AnimatedSplashOverlay />
       <CreateBottomSheet />
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
+        {/* Point d'entrée : loader / WelcomeScreen / redirection vers les tabs */}
         <Stack.Screen name="index" />
-        <Stack.Screen name="auth/login" />
+
+        {/* Écrans publics : inaccessibles une fois connecté */}
+        <Stack.Protected guard={!isLoggedIn}>
+          <Stack.Screen name="auth/login" />
+        </Stack.Protected>
+
+        {/* Écrans privés : démontés automatiquement à la déconnexion */}
+        <Stack.Protected guard={isLoggedIn}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="profil" />
+          <Stack.Screen name="onboarding" />
+          <Stack.Screen name="sports" />
+          <Stack.Screen name="edit-profile" />
+          <Stack.Screen name="favorites" />
+          <Stack.Screen name="manage-events" />
+          <Stack.Screen name="notifications" />
+          <Stack.Screen name="apercu" />
+          <Stack.Screen name="scan" />
+          <Stack.Screen name="success" />
+          <Stack.Screen name="chat/[id]" />
+          <Stack.Screen name="check-in/[id]" />
+          <Stack.Screen name="club/create" />
+          <Stack.Screen name="club/[id]/index" />
+          <Stack.Screen name="club/[id]/requests" />
+          <Stack.Screen name="event/create" />
+          <Stack.Screen name="event/[id]" />
+          <Stack.Screen name="ticket/[id]" />
+          <Stack.Screen name="tracker/live" />
+          <Stack.Screen name="tracker/summary" />
+        </Stack.Protected>
       </Stack>
     </ThemeProvider>
   );

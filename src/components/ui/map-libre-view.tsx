@@ -1,5 +1,5 @@
-import { Colors } from '@/constants/theme';
-import { Camera, CameraRef, Map, Marker, UserLocation } from '@maplibre/maplibre-react-native';
+import { Colors, AccentColors } from '@/constants/theme';
+import { Camera, CameraRef, Map, Marker, UserLocation, GeoJSONSource, Layer } from '@maplibre/maplibre-react-native';
 import * as Location from 'expo-location';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View, StyleProp, ViewStyle } from 'react-native';
@@ -18,6 +18,9 @@ export interface MapMarker {
 interface MapLibreViewProps {
   markers?: MapMarker[];
   centerCoords?: { latitude: number; longitude: number } | null;
+  routeCoordinates?: { latitude: number; longitude: number }[];
+  routeColor?: string;
+  followRoute?: boolean;
   onMapPress?: (coords: { latitude: number; longitude: number }) => void;
   onMarkerPress?: (marker: MapMarker) => void;
   showUserLocation?: boolean;
@@ -28,6 +31,9 @@ interface MapLibreViewProps {
 export const MapLibreView: React.FC<MapLibreViewProps> = ({
   markers = [],
   centerCoords,
+  routeCoordinates,
+  routeColor = AccentColors.bissap,
+  followRoute = false,
   onMapPress,
   onMarkerPress,
   showUserLocation = true,
@@ -37,6 +43,19 @@ export const MapLibreView: React.FC<MapLibreViewProps> = ({
   const cameraRef = useRef<CameraRef>(null);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
+
+  // GeoJSON LineString for live polyline / route
+  const routeGeoJSON = React.useMemo(() => {
+    if (!routeCoordinates || routeCoordinates.length < 2) return null;
+    return {
+      type: 'Feature' as const,
+      properties: {},
+      geometry: {
+        type: 'LineString' as const,
+        coordinates: routeCoordinates.map((c) => [c.longitude, c.latitude]),
+      },
+    };
+  }, [routeCoordinates]);
 
   // Request coordinates on load to get user position for camera centering
   useEffect(() => {
@@ -63,6 +82,16 @@ export const MapLibreView: React.FC<MapLibreViewProps> = ({
     if (!hasLayout || !cameraRef.current) return;
 
     try {
+      if (followRoute && routeCoordinates && routeCoordinates.length > 0) {
+        const last = routeCoordinates[routeCoordinates.length - 1];
+        cameraRef.current.easeTo({
+          center: [last.longitude, last.latitude],
+          zoom: Math.max(zoomLevel, 15),
+          duration: 600,
+        });
+        return;
+      }
+
       if (centerCoords) {
         cameraRef.current.easeTo({
           center: [centerCoords.longitude, centerCoords.latitude],
@@ -109,6 +138,25 @@ export const MapLibreView: React.FC<MapLibreViewProps> = ({
             );
           }
         }
+      } else if (routeCoordinates && routeCoordinates.length > 1) {
+        // Fit camera to the full route if not actively following
+        const lats = routeCoordinates.map((c) => c.latitude);
+        const lngs = routeCoordinates.map((c) => c.longitude);
+        const minLat = Math.min(...lats);
+        const maxLat = Math.max(...lats);
+        const minLng = Math.min(...lngs);
+        const maxLng = Math.max(...lngs);
+
+        const safePadH = Math.min(40, Math.floor(dimensions.width * 0.12));
+        const safePadV = Math.min(40, Math.floor(dimensions.height * 0.12));
+
+        cameraRef.current.fitBounds(
+          [minLng, minLat, maxLng, maxLat],
+          {
+            padding: { top: safePadV, bottom: safePadV, left: safePadH, right: safePadH },
+            duration: 800,
+          }
+        );
       } else if (userLocation) {
         cameraRef.current.easeTo({
           center: userLocation,
@@ -119,7 +167,7 @@ export const MapLibreView: React.FC<MapLibreViewProps> = ({
     } catch (err) {
       console.warn('Map camera update warning:', err);
     }
-  }, [centerCoords, markers, userLocation, hasLayout, zoomLevel, dimensions]);
+  }, [centerCoords, markers, userLocation, routeCoordinates, followRoute, hasLayout, zoomLevel, dimensions]);
 
   const handlePress = (e: any) => {
     if (onMapPress && e.geometry?.coordinates) {
@@ -182,6 +230,45 @@ export const MapLibreView: React.FC<MapLibreViewProps> = ({
         />
 
         {showUserLocation && <UserLocation />}
+
+        {/* Live Route Polyline */}
+        {routeGeoJSON && (
+          <GeoJSONSource id="tracker-route-source" data={routeGeoJSON}>
+            <Layer
+              id="tracker-route-line-casing"
+              type="line"
+              style={{
+                lineColor: '#ffffff',
+                lineWidth: 7,
+                lineCap: 'round',
+                lineJoin: 'round',
+                lineOpacity: 0.9,
+              }}
+            />
+            <Layer
+              id="tracker-route-line"
+              type="line"
+              style={{
+                lineColor: routeColor,
+                lineWidth: 5,
+                lineCap: 'round',
+                lineJoin: 'round',
+              }}
+            />
+          </GeoJSONSource>
+        )}
+
+        {/* Start Pin when route exists */}
+        {routeCoordinates && routeCoordinates.length > 0 && (
+          <Marker
+            id="tracker-start-pin"
+            lngLat={[routeCoordinates[0].longitude, routeCoordinates[0].latitude]}
+          >
+            <View style={styles.startDot}>
+              <View style={styles.startDotInner} />
+            </View>
+          </Marker>
+        )}
 
         {markers.map((marker) => (
           <Marker
@@ -278,5 +365,24 @@ const styles = StyleSheet.create({
   },
   recenterIcon: {
     fontSize: 20,
+  },
+  startDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  startDotInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#10b981', // green start indicator
   },
 });
