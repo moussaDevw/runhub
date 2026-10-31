@@ -98,7 +98,7 @@ export function TrackerHomeScreen() {
             accessibilityLabel={t('tracker.myProfile')}
             style={styles.avatarButton}
           >
-            <Avatar initials={userInitials} size={36} backgroundColor={AccentColors.bissap} />
+            <Avatar uri={user?.avatarUrl} initials={userInitials} size={36} backgroundColor={AccentColors.bissap} />
           </TouchableOpacity>
           <View>
             <Text style={styles.headerTitle}>{t('tracker.title')}</Text>

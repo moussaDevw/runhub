@@ -10,6 +10,7 @@ export interface ProfileHeaderCardProps {
   phone?: string;
   initials: string;
   avatarColor?: string;
+  avatarUrl?: string | null;
   onPress?: () => void;
 }
 
@@ -20,6 +21,7 @@ export function ProfileHeaderCard({
   phone,
   initials,
   avatarColor = '#b8324f',
+  avatarUrl,
   onPress,
 }: ProfileHeaderCardProps) {
   const info = email || phone || '';
@@ -31,7 +33,7 @@ export function ProfileHeaderCard({
       disabled={!onPress}
       accessibilityRole="button"
     >
-      <Avatar initials={initials} size={64} backgroundColor={avatarColor} />
+      <Avatar uri={avatarUrl} initials={initials} size={64} backgroundColor={avatarColor} />
       
       <View style={styles.textContainer}>
         <Text style={styles.name}>{name}</Text>

@@ -10,7 +10,8 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 
 import { HStack, Screen, Spacer } from '@/components/layout';
 import { useTheme } from '@/hooks/use-theme';
@@ -48,6 +49,18 @@ export function ProfileScreen() {
 
   const { data: myClubs, isLoading: isLoadingClubs } = useMyClubs();
 
+  const handleContactSupport = () => {
+    Linking.openURL('mailto:contact@musatech.tech?subject=Support%20RunHub').catch((err) => {
+      console.warn('Impossible d’ouvrir le client mail:', err);
+    });
+  };
+
+  const handleOpenPrivacy = () => {
+    WebBrowser.openBrowserAsync('https://musatech.tech/privacy').catch((err) => {
+      console.warn('Impossible d’ouvrir le navigateur:', err);
+    });
+  };
+
   return (
     <Screen
       safeTop
@@ -84,6 +97,7 @@ export function ProfileScreen() {
         email={displayEmail}
         initials={initials}
         avatarColor={AccentColors.bissap}
+        avatarUrl={user?.avatarUrl}
         onPress={() => router.push('/edit-profile' as any)}
       />
 
@@ -260,38 +274,22 @@ export function ProfileScreen() {
             }}
           />
 
-          {/* COMPTE */}
-          <Text style={[styles.sectionHeader, { marginTop: Spacing.space24 }]}>{t('profile.account')}</Text>
-          <SettingsRow
-            iconName="card-outline"
-            title={t('profile.paymentMethods')}
-            subtitle="Wave · 77 123 45 67"
-            onPress={() => { }}
-          />
-          <SettingsRow
-            iconName="lock-closed-outline"
-            title={t('profile.privacy')}
-            subtitle={t('profile.privacyDesc')}
-            onPress={() => { }}
-          />
-          <SettingsRow
-            iconName="shield-checkmark-outline"
-            title={t('profile.securityAndPassword')}
-            onPress={() => { }}
-          />
-
           {/* SUPPORT */}
           <Text style={[styles.sectionHeader, { marginTop: Spacing.space24 }]}>{t('profile.support')}</Text>
           <SettingsRow
             iconName="help-outline"
             title={t('profile.helpAndContact')}
-            onPress={() => { }}
+            subtitle="contact@musatech.tech"
+            onPress={handleContactSupport}
           />
           <SettingsRow
-            iconName="arrow-forward-outline"
+            iconName="shield-checkmark-outline"
             title={t('profile.termsAndPrivacy')}
-            onPress={() => { }}
+            onPress={handleOpenPrivacy}
           />
+
+          {/* COMPTE */}
+          <Text style={[styles.sectionHeader, { marginTop: Spacing.space24 }]}>{t('profile.account')}</Text>
           <SettingsRow
             iconName="log-out-outline"
             title={t('profile.logout')}
@@ -309,6 +307,10 @@ export function ProfileScreen() {
             isLoading={isDeletingAccount}
             onPress={handleDeleteAccount}
           />
+
+          <View style={styles.versionContainer}>
+            <Text style={styles.versionText}>RunHub v1.0.0 (Dakar)</Text>
+          </View>
         </View>
       )}
 
@@ -467,5 +469,16 @@ const styles = StyleSheet.create({
   navTitle: {
     fontFamily: Typography.titre.fontFamily,
     fontSize: 18,
+  },
+  versionContainer: {
+    paddingVertical: Spacing.space24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  versionText: {
+    fontFamily: Typography.meta.fontFamily,
+    fontSize: 12,
+    color: Colors.light.ink3,
+    letterSpacing: 0.5,
   },
 });

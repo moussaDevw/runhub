@@ -45,20 +45,22 @@ export function EventBottomBar({
       </View>
 
       <View style={styles.rightContent}>
-        <TouchableOpacity
-          activeOpacity={0.8}
-          style={[styles.chatButton, hasWhatsApp && styles.whatsappButton]}
-          onPress={onChat}
-          accessibilityRole="button"
-          hitSlop={8}
-        >
-          <Ionicons
-            name={hasWhatsApp ? 'logo-whatsapp' : 'chatbubble-outline'}
-            size={22}
-            color={hasWhatsApp ? '#ffffff' : Colors.light.text}
-          />
-          {!hasWhatsApp && <View style={styles.notificationDot} />}
-        </TouchableOpacity>
+        {hasWhatsApp && (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={[styles.chatButton, styles.whatsappButton]}
+            onPress={onChat}
+            accessibilityRole="button"
+            accessibilityLabel="Rejoindre le groupe WhatsApp"
+            hitSlop={8}
+          >
+            <Ionicons
+              name="logo-whatsapp"
+              size={22}
+              color="#ffffff"
+            />
+          </TouchableOpacity>
+        )}
 
         <View style={styles.participateWrapper}>
           {isLoading ? (
