@@ -84,6 +84,7 @@ export function ProfileScreen() {
         email={displayEmail}
         initials={initials}
         avatarColor={AccentColors.bissap}
+        avatarUrl={user?.avatarUrl}
         onPress={() => router.push('/edit-profile' as any)}
       />
 

@@ -24,6 +24,9 @@ export function EditProfileScreen() {
     setBio,
     email,
     setEmail,
+    avatarUrl,
+    isUploadingAvatar,
+    handlePickAvatar,
     isSaving,
     initials,
     handleSave,
@@ -74,14 +77,30 @@ export function EditProfileScreen() {
 
       {/* AVATAR SECTION */}
       <View style={styles.avatarSection}>
-        <View style={styles.avatarWrapper}>
-          <Avatar initials={initials} size={96} backgroundColor={AccentColors.bissap} />
+        <TouchableOpacity
+          style={styles.avatarWrapper}
+          activeOpacity={0.8}
+          onPress={handlePickAvatar}
+          disabled={isUploadingAvatar}
+        >
+          <Avatar uri={avatarUrl} initials={initials} size={96} backgroundColor={AccentColors.bissap} />
           <View style={styles.cameraBadge}>
-            <Ionicons name="camera" size={16} color="#ffffff" />
+            {isUploadingAvatar ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Ionicons name="camera" size={16} color="#ffffff" />
+            )}
           </View>
-        </View>
-        <TouchableOpacity style={styles.changePhotoButton} accessibilityRole="button">
-          <Text style={styles.changePhotoText}>{t('editProfile.changePhoto')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.changePhotoButton}
+          accessibilityRole="button"
+          onPress={handlePickAvatar}
+          disabled={isUploadingAvatar}
+        >
+          <Text style={styles.changePhotoText}>
+            {isUploadingAvatar ? t('common.loading', { defaultValue: 'Chargement...' }) : t('editProfile.changePhoto')}
+          </Text>
         </TouchableOpacity>
       </View>
 

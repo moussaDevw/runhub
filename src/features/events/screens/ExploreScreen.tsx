@@ -36,6 +36,7 @@ export function ExploreScreen() {
     activeTab,
     setActiveTab,
     userInitials,
+    userAvatarUrl,
     unreadNotificationsCount,
     sportsList,
     events,
@@ -76,7 +77,7 @@ export function ExploreScreen() {
         {/* Top Bar : Avatar | Titre | Favoris + Notifications */}
         <HStack align="center" justify="space-between" style={styles.topBar}>
           <TouchableOpacity activeOpacity={0.8} onPress={handleNavigateProfile} accessibilityRole="button">
-            <Avatar initials={userInitials} size={36} backgroundColor={SportsColors.yoga} />
+            <Avatar uri={userAvatarUrl} initials={userInitials} size={36} backgroundColor={SportsColors.yoga} />
           </TouchableOpacity>
 
           <View style={styles.topCenter}>
