@@ -39,6 +39,8 @@ export function ProfileScreen() {
     updateLanguage,
     handleLogout,
     isLoggingOut,
+    handleDeleteAccount,
+    isDeletingAccount,
     handleRemoveSport,
     deletingSportId,
     router,
@@ -297,6 +299,15 @@ export function ProfileScreen() {
             isDestructive={true}
             isLoading={isLoggingOut}
             onPress={handleLogout}
+          />
+          <SettingsRow
+            iconName="trash-outline"
+            title={t('profile.deleteAccount')}
+            subtitle={t('profile.deleteAccountDesc')}
+            type="none"
+            isDestructive={true}
+            isLoading={isDeletingAccount}
+            onPress={handleDeleteAccount}
           />
         </View>
       )}

@@ -13,6 +13,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (provider: 'google' | 'apple', idToken: string, firstName?: string, lastName?: string) => Promise<User>;
+  loginWithEmailOtp: (email: string, code: string) => Promise<User>;
   logout: () => Promise<void>;
   updateUser: (updatedUser: User) => void;
   refreshUser: () => Promise<User>;
@@ -71,6 +72,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return finalUser;
   }, []);
 
+  const loginWithEmailOtp = useCallback(async (
+    email: string,
+    code: string,
+  ): Promise<User> => {
+    const res = await AuthApi.verifyEmailOtp(email, code);
+
+    // Repartir d'un cache vide pour ne jamais afficher les données d'un compte précédent
+    queryClient.clear();
+
+    let finalUser: User;
+    try {
+      finalUser = await AuthApi.getMe();
+    } catch {
+      finalUser = res.user;
+    }
+    const token = await TokenStorage.getAccessToken();
+    setUser(finalUser);
+    setSession(token);
+    return finalUser;
+  }, []);
+
   const isLoggingOut = useRef(false);
 
   const logout = useCallback(async () => {
@@ -111,10 +133,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading,
     isAuthenticated: !!session,
     login,
+    loginWithEmailOtp,
     logout,
     updateUser,
     refreshUser,
-  }), [user, session, isLoading, login, logout, updateUser, refreshUser]);
+  }), [user, session, isLoading, login, loginWithEmailOtp, logout, updateUser, refreshUser]);
 
   return (
     <AuthContext.Provider value={value}>

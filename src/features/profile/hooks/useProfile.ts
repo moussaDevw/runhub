@@ -15,6 +15,7 @@ export function useProfile() {
   // deletingSportId is the only piece of local UI state needed
   const [deletingSportId, setDeletingSportId] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   // Derive toggle states directly from user — avoids useState+useEffect anti-pattern
   const notificationsEnabled = user?.notifEnabled ?? true;
@@ -101,6 +102,35 @@ export function useProfile() {
     );
   };
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      t('profile.deleteAccountTitle'),
+      t('profile.deleteAccountConfirm'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('profile.deleteAccountButton'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsDeletingAccount(true);
+              await ProfileApi.deleteAccount();
+              await logout();
+            } catch (err: any) {
+              console.error('Erreur suppression compte:', err);
+              Alert.alert(
+                t('common.error', 'Erreur'),
+                err?.message || 'Impossible de supprimer le compte pour le moment.'
+              );
+            } finally {
+              setIsDeletingAccount(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   return {
     user,
     fullName,
@@ -116,6 +146,8 @@ export function useProfile() {
     updateLanguage,
     handleLogout,
     isLoggingOut,
+    handleDeleteAccount,
+    isDeletingAccount,
     handleRemoveSport,
     deletingSportId,
     router,
